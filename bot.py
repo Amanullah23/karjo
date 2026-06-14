@@ -1,11 +1,9 @@
 import os
-import asyncio
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from scraper import collect_all_jobs
 from database import save_jobs, get_latest_jobs, get_todays_jobs
@@ -28,9 +26,8 @@ SOURCE_EMOJI = {
 }
 
 def format_job_message(jobs: list[dict], title: str) -> list[str]:
-    """Format jobs into Telegram messages (split if too long)."""
     if not jobs:
-        return [f"😕 No jobs found at the moment. Try again later."]
+        return ["😕 No jobs found at the moment. Try again later."]
 
     messages = []
     header = (
@@ -39,117 +36,85 @@ def format_job_message(jobs: list[dict], title: str) -> list[str]:
         f"{'─' * 30}\n\n"
     )
     current = header
-    count = 0
 
     for job in jobs:
-        emoji  = SOURCE_EMOJI.get(job.get("source", ""), "📌")
-        source = job.get("source", "Unknown")
-        title_text  = job.get("title", "N/A")
-        company     = job.get("company", "N/A")
-        skills      = job.get("skills", "N/A")
-        date        = job.get("date", "N/A")
-        url         = job.get("url", "#")
-
+        emoji   = SOURCE_EMOJI.get(job.get("source", ""), "📌")
         block = (
-            f"{emoji} *{title_text}*\n"
-            f"🏢 {company}\n"
-            f"🛠 {skills}\n"
-            f"📆 {date}\n"
-            f"🔗 [View Job]({url})\n"
+            f"{emoji} *{job.get('title', 'N/A')}*\n"
+            f"🏢 {job.get('company', 'N/A')}\n"
+            f"🛠 {job.get('skills', 'N/A')}\n"
+            f"📆 {job.get('date', 'N/A')}\n"
+            f"🔗 [View Job]({job.get('url', '#')})\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
         )
-
-        # Telegram max message length is 4096 chars
         if len(current) + len(block) > 3800:
             messages.append(current)
             current = block
         else:
             current += block
-        count += 1
 
     if current:
         messages.append(current)
 
-    # Add footer to last message
-    messages[-1] += f"\n✅ *{count} jobs found* | Powered by KarJo 🚀"
+    messages[-1] += f"\n✅ Powered by KarJo 🚀"
     return messages
 
 
-# ── /start command ─────────────────────────────────────────────────────────────
+# ── Commands ───────────────────────────────────────────────────────────────────
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("🔍 Get Latest Jobs", callback_data="jobs")],
-        [InlineKeyboardButton("📅 Today's Jobs", callback_data="today")],
-    ]
     await update.message.reply_text(
-        "👋 *Welcome to KarJo — کارجو!*\n\n"
+        "👋 *Welcome to KarJo — کارجو\\!*\n\n"
         "Your personal Afghan job finder bot 🇦🇫\n\n"
-        "I scrape the latest jobs from:\n"
-        "🇦🇫 jobs\\.af\n"
-        "🌍 acbar\\.org\n"
-        "💼 LinkedIn Afghanistan\n\n"
-        "Use the commands below:\n"
-        "• /jobs — Get latest 20 jobs\n"
-        "• /today — Get today's new jobs\n"
+        "Commands:\n"
+        "• /jobs — Latest 20 jobs\n"
+        "• /today — Today's new jobs\n"
         "• /refresh — Scrape fresh jobs now\n"
         "• /help — Show all commands\n\n"
-        "📬 I'll also send you jobs automatically every morning at 8:00 AM!",
-        parse_mode="Markdown",
+        "📬 Auto\\-delivery every morning at *8:00 AM Kabul time\\!*",
+        parse_mode="MarkdownV2",
     )
 
-
-# ── /help command ──────────────────────────────────────────────────────────────
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📋 *KarJo Commands:*\n\n"
         "/start — Welcome message\n"
-        "/jobs — Latest 20 jobs from all sources\n"
-        "/today — Jobs scraped today\n"
-        "/refresh — Scrape fresh jobs right now\n"
+        "/jobs — Latest 20 jobs\n"
+        "/today — Today's new jobs\n"
+        "/refresh — Scrape fresh jobs now\n"
         "/help — Show this message\n\n"
-        "🕗 Auto-delivery: Every day at *8:00 AM*",
-        parse_mode="Markdown",
+        "🕗 Auto\\-delivery every day at *8:00 AM*",
+        parse_mode="MarkdownV2",
     )
 
-
-# ── /jobs command ──────────────────────────────────────────────────────────────
 async def jobs_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ Fetching latest jobs for you...")
     jobs = get_latest_jobs(limit=20)
-    messages = format_job_message(jobs, "Latest Afghan Jobs")
-    for msg in messages:
+    for msg in format_job_message(jobs, "Latest Afghan Jobs"):
         await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
-
-# ── /today command ─────────────────────────────────────────────────────────────
 async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ Fetching today's jobs...")
     jobs = get_todays_jobs()
-    messages = format_job_message(jobs, "Today's New Jobs")
-    for msg in messages:
+    for msg in format_job_message(jobs, "Today's New Jobs"):
         await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
-
-# ── /refresh command ───────────────────────────────────────────────────────────
 async def refresh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🔄 Scraping fresh jobs from all sources... Please wait.")
-    jobs     = collect_all_jobs()
-    new_count = save_jobs(jobs)
-    latest   = get_latest_jobs(limit=20)
-    messages = format_job_message(latest, f"Fresh Jobs ({new_count} new found)")
-    for msg in messages:
-        await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
-
-
-# ── Daily auto-send at 8:00 AM ─────────────────────────────────────────────────
-async def daily_job_send(app: Application):
-    logger.info("⏰ Running daily job scrape and send...")
+    await update.message.reply_text("🔄 Scraping fresh jobs... Please wait.")
     jobs      = collect_all_jobs()
     new_count = save_jobs(jobs)
     latest    = get_latest_jobs(limit=20)
-    messages  = format_job_message(latest, f"☀️ Good Morning! Daily Job Digest ({new_count} new)")
-    for msg in messages:
-        await app.bot.send_message(
+    for msg in format_job_message(latest, f"Fresh Jobs ({new_count} new found)"):
+        await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
+
+
+# ── Daily auto-send using JobQueue ────────────────────────────────────────────
+async def daily_job_send(context: ContextTypes.DEFAULT_TYPE):
+    logger.info("⏰ Running daily job scrape...")
+    jobs      = collect_all_jobs()
+    new_count = save_jobs(jobs)
+    latest    = get_latest_jobs(limit=20)
+    for msg in format_job_message(latest, f"☀️ Daily Job Digest ({new_count} new)"):
+        await context.bot.send_message(
             chat_id=CHAT_ID,
             text=msg,
             parse_mode="Markdown",
@@ -169,18 +134,14 @@ def main():
     app.add_handler(CommandHandler("today",   today_command))
     app.add_handler(CommandHandler("refresh", refresh_command))
 
-    # Scheduler — daily at 08:00 AM Kabul time (UTC+4:30 = UTC 03:30)
-    scheduler = AsyncIOScheduler(timezone="Asia/Kabul")
-    scheduler.add_job(
+    # Daily job at 08:00 AM Kabul time (UTC+4:30 = 03:30 UTC)
+    app.job_queue.run_daily(
         daily_job_send,
-        trigger="cron",
-        hour=8,
-        minute=0,
-        args=[app],
+        time=datetime.strptime("08:00", "%H:%M").time(),
+        job_kwargs={"misfire_grace_time": 60},
     )
-    scheduler.start()
-    logger.info("✅ KarJo bot is running... Daily digest at 8:00 AM Kabul time.")
 
+    logger.info("✅ KarJo bot is running... Daily digest at 8:00 AM Kabul time.")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
