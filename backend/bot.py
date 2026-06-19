@@ -56,7 +56,7 @@ def format_job_message(jobs: list[dict], title: str) -> list[str]:
     if current:
         messages.append(current)
 
-    messages[-1] += f"\n✅ Powered by KarJo 🚀"
+    messages[-1] += f"\n✅ Powered by KarJo - کارجو"  # Add footer to last message
     return messages
 
 

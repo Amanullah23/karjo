@@ -12,7 +12,7 @@ HEADERS = {
 def scrape_jobs_af():
     jobs = []
     try:
-        url = "https://jobs.af/jobs"
+        url = "https://jobs.af/public/job"
         res = requests.get(url, headers=HEADERS, timeout=15)
         soup = BeautifulSoup(res.text, "lxml")
 
@@ -55,7 +55,7 @@ def scrape_jobs_af():
 def scrape_acbar():
     jobs = []
     try:
-        url = "https://www.acbar.org/jobs"
+        url = "https://www.acbar.org/en/jobs"
         res = requests.get(url, headers=HEADERS, timeout=15)
         soup = BeautifulSoup(res.text, "lxml")
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockJobs } from "@/data/mockJobs";
+import { useState, useMemo, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import JobCard from "@/components/JobCard";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { JobSource } from "@/types";
+import { Job, JobSource } from "@/types";
 
 const sources: { value: JobSource; label: string }[] = [
   { value: "all",       label: "All Sources" },
@@ -15,16 +15,37 @@ const sources: { value: JobSource; label: string }[] = [
 ];
 
 export default function JobsPage() {
+  const [jobs,    setJobs]    = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search,  setSearch]  = useState("");
   const [source,  setSource]  = useState<JobSource>("all");
   const [saved,   setSaved]   = useState<string[]>([]);
   const [applied, setApplied] = useState<string[]>([]);
 
+  useEffect(() => {
+    async function fetchJobs() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setFetchError(error.message);
+      } else {
+        setJobs(data ?? []);
+      }
+      setLoading(false);
+    }
+    fetchJobs();
+  }, []);
+
   const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
   const filtered = useMemo(() => {
-    return mockJobs.filter((j) => {
+    return jobs.filter((j) => {
       const matchSource = source === "all" || j.source === source;
       const matchSearch =
         !search ||
@@ -33,7 +54,7 @@ export default function JobsPage() {
         j.skills.toLowerCase().includes(search.toLowerCase());
       return matchSource && matchSearch;
     });
-  }, [search, source]);
+  }, [jobs, search, source]);
 
   return (
     <div className="min-h-screen bg-cream pt-24 pb-16">
@@ -43,7 +64,7 @@ export default function JobsPage() {
         <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">Browse</p>
         <h1 className="font-display text-4xl font-bold text-navy mb-2">All Jobs</h1>
         <p className="text-charcoal/60 text-sm">
-          {filtered.length} opportunit{filtered.length !== 1 ? "ies" : "y"} found across Afghanistan
+          {loading ? "Loading…" : `${filtered.length} opportunit${filtered.length !== 1 ? "ies" : "y"} found across Afghanistan`}
         </p>
       </div>
 
@@ -51,7 +72,6 @@ export default function JobsPage() {
       <div className="max-w-7xl mx-auto px-6 mb-8">
         <div className="bg-white border border-warm-gray rounded-2xl p-4 flex flex-col sm:flex-row gap-3">
 
-          {/* Search */}
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
@@ -67,7 +87,6 @@ export default function JobsPage() {
             )}
           </div>
 
-          {/* Source filter */}
           <div className="flex gap-2 flex-wrap">
             {sources.map((s) => (
               <button
@@ -88,7 +107,16 @@ export default function JobsPage() {
 
       {/* ── Job grid ── */}
       <div className="max-w-7xl mx-auto px-6">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-24">
+            <p className="text-warm-muted text-sm">Loading jobs…</p>
+          </div>
+        ) : fetchError ? (
+          <div className="text-center py-24">
+            <p className="font-display text-2xl font-bold text-navy mb-2">Couldn't load jobs</p>
+            <p className="text-warm-muted text-sm">{fetchError}</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-24">
             <p className="font-display text-2xl font-bold text-navy mb-2">No jobs found</p>
             <p className="text-warm-muted text-sm">Try a different search or source filter.</p>
