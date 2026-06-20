@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { useJobActions } from "@/lib/use-job-actions";
 import {
   Briefcase, Zap, Bell, Filter, ArrowRight, TrendingUp,
   ExternalLink, ChevronDown, Sparkles, Clock, Shield
@@ -16,6 +17,7 @@ import { useState, useRef, useEffect } from "react";
 function Counter({ to, duration = 2 }: { to: number; duration?: number }) {
   const [count,   setCount]   = useState(0);
   const [mounted, setMounted] = useState(false);
+  const { savedIds: saved, appliedIds: applied, toggleSave, toggleApply } = useJobActions();
 
   useEffect(() => {
     setMounted(true);

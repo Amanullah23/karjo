@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Briefcase, Bookmark, CheckCircle2, TrendingUp, Bell, RefreshCw, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { mockJobs } from "@/data/mockJobs";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const stats = [
   { icon: <Briefcase size={20} className="text-navy" />,       label: "Total Jobs",     value: "247",  change: "+12 today",  color: "bg-blue-50 border-blue-100" },
@@ -22,6 +23,7 @@ const recentJobs = mockJobs.slice(0, 5);
 
 export default function DashboardPage() {
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-cream pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-6">
 
@@ -171,5 +173,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+      </ProtectedRoute>
   );
 }

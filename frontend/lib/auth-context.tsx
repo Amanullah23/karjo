@@ -72,18 +72,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function signUp(email: string, password: string, fullName: string, role: UserRole) {
+async function signUp(email: string, password: string, fullName: string, role: UserRole) {
+  try {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName, role } },
     });
-    return { error: error?.message ?? null };
+    if (error) {
+      console.error("[Auth] signUp error:", error);
+      return { error: error.message || "Sign up failed. Please try again." };
+    }
+    return { error: null };
+  } catch (e) {
+    console.error("[Auth] signUp exception:", e);
+    return { error: "Something went wrong. Please try again." };
   }
+}
 
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error?.message ?? null };
+    } catch (e) {
+      console.error("[Auth] signIn exception:", e);
+      return { error: "Something went wrong. Please try again." };
+    }
   }
 
   async function signInWithGoogle() {

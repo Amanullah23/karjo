@@ -6,6 +6,7 @@ import JobCard from "@/components/JobCard";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Job, JobSource } from "@/types";
+import { useJobActions } from "@/lib/use-job-actions";
 
 const sources: { value: JobSource; label: string }[] = [
   { value: "all",       label: "All Sources" },
@@ -29,9 +30,13 @@ export default function JobsPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search,  setSearch]  = useState("");
   const [source,  setSource]  = useState<JobSource>("all");
-  const [saved,   setSaved]   = useState<string[]>([]);
-  const [applied, setApplied] = useState<string[]>([]);
+  //const [saved,   setSaved]   = useState<string[]>([]);
+  //const [applied, setApplied] = useState<string[]>([]);
   const [page,    setPage]    = useState(1);
+
+
+const { savedIds: saved, appliedIds: applied, toggleSave, toggleApply } = useJobActions();
+
 
   useEffect(() => {
     async function fetchJobs() {
@@ -51,8 +56,8 @@ export default function JobsPage() {
     fetchJobs();
   }, []);
 
-  const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
-  const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  //const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  //const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
