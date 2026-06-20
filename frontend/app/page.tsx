@@ -6,7 +6,9 @@ import {
   Briefcase, Zap, Bell, Filter, ArrowRight, TrendingUp,
   ExternalLink, ChevronDown, Sparkles, Clock, Shield
 } from "lucide-react";
-import { mockJobs } from "@/data/mockJobs";
+
+import { supabase } from "@/lib/supabase";
+import { Job } from "@/types";
 import JobCard from "@/components/JobCard";
 import { useState, useRef, useEffect } from "react";
 
@@ -183,6 +185,8 @@ export default function HomePage() {
   const [saved,   setSaved]   = useState<string[]>([]);
   const [applied, setApplied] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [featured, setFeatured] = useState<Job[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -193,9 +197,25 @@ export default function HomePage() {
 
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    async function fetchFeatured() {
+      const { data } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(6);
+      setFeatured(data ?? []);
+
+      const { count } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true });
+      setTotalCount(count ?? 0);
+    }
+    fetchFeatured();
+  }, []);
+
   const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
-  const featured = mockJobs.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
@@ -210,7 +230,7 @@ export default function HomePage() {
 
         {/* Static dark bg shown on server */}
         {!mounted && (
-          <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-vany to-[#0a2a1f]" />
+          <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />
         )}
 
         {/* Floating preview cards — desktop only, client only */}
@@ -309,7 +329,7 @@ export default function HomePage() {
             {[
               { icon: <Clock size={13} />,    text: "Updated at 8 AM daily" },
               { icon: <Shield size={13} />,   text: "Free forever" },
-              { icon: <Sparkles size={13} />, text: `${mockJobs.length} jobs available now` },
+              { icon: <Sparkles size={13} />, text: `${totalCount} jobs available now` },
             ].map((t) => (
               <div key={t.text} className="flex items-center gap-1.5 text-white/40 text-xs">
                 <span className="text-emerald">{t.icon}</span>
@@ -418,7 +438,7 @@ export default function HomePage() {
             href="/jobs"
             className="inline-flex items-center gap-2 border-2 border-navy text-navy font-bold px-8 py-3.5 rounded-2xl hover:bg-navy hover:text-white transition-all duration-200"
           >
-            View all {mockJobs.length} jobs <ArrowRight size={16} />
+            View all {totalCount} jobs <ArrowRight size={16} />
           </Link>
         </motion.div>
       </section>
