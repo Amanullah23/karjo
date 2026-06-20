@@ -12,30 +12,25 @@ HEADERS = {
 def scrape_jobs_af():
     jobs = []
     try:
-        url = "https://jobs.af/public/job"
-        res = requests.get(url, headers=HEADERS, timeout=15)
-        soup = BeautifulSoup(res.text, "lxml")
+        url = "https://api.jobs.af/public/jobs"
+        res = requests.get(url, headers=HEADERS, params={"itemsPerPage": 20, "page": 1}, timeout=15)
+        data = res.json()
 
-        cards = soup.select("div.job-item, div.job-listing, article.job-card")
-        if not cards:
-            # fallback selector
-            cards = soup.select("div[class*='job']")
+        for item in data.get("data", []):
+            title = item.get("title", "N/A")
+            company = item.get("company", {}).get("name", "N/A")
 
-        for card in cards[:20]:
-            title_el   = card.select_one("h2, h3, a.job-title, .title")
-            company_el = card.select_one(".company, .employer, .organization")
-            date_el    = card.select_one(".date, .posted, time")
-            link_el    = card.select_one("a[href]")
-            skills_el  = card.select_one(".skills, .tags, .categories")
+            provinces = item.get("provinces", [])
+            province_names = ", ".join(p["province"]["name"] for p in provinces if p.get("province"))
 
-            title   = title_el.get_text(strip=True)   if title_el   else "N/A"
-            company = company_el.get_text(strip=True)  if company_el else "N/A"
-            date    = date_el.get_text(strip=True)     if date_el    else datetime.now().strftime("%Y-%m-%d")
-            skills  = skills_el.get_text(strip=True)   if skills_el  else "N/A"
-            href    = link_el["href"]                  if link_el    else url
+            areas = item.get("functionalAreas", [])
+            skills = ", ".join(a["area"]["name"] for a in areas if a.get("area")) or province_names or "N/A"
 
-            if not href.startswith("http"):
-                href = "https://jobs.af" + href
+            publish_date = item.get("publishDate", "")
+            date = publish_date.split(" ")[0] if publish_date else datetime.now().strftime("%Y-%m-%d")
+
+            slug = item.get("slug", "")
+            job_url = f"https://jobs.af/public/job/{slug}" if slug else url
 
             if title and title != "N/A":
                 jobs.append({
@@ -43,7 +38,7 @@ def scrape_jobs_af():
                     "company": company,
                     "skills":  skills,
                     "date":    date,
-                    "url":     href,
+                    "url":     job_url,
                     "source":  "jobs.af",
                 })
     except Exception as e:
@@ -59,34 +54,41 @@ def scrape_acbar():
         res = requests.get(url, headers=HEADERS, timeout=15)
         soup = BeautifulSoup(res.text, "lxml")
 
-        cards = soup.select("div.views-row, div.job-item, tr.odd, tr.even")
+        title_links = soup.select("a[href*='/jobs/details/']")
+        seen_urls = set()
 
-        for card in cards[:20]:
-            title_el   = card.select_one("a, h3, h2, .views-field-title")
-            company_el = card.select_one(".organization, .company, .views-field-field-organization")
-            date_el    = card.select_one(".date, .views-field-created, time")
-            link_el    = card.select_one("a[href]")
-
-            title   = title_el.get_text(strip=True)   if title_el   else "N/A"
-            company = company_el.get_text(strip=True)  if company_el else "N/A"
-            date    = date_el.get_text(strip=True)     if date_el    else datetime.now().strftime("%Y-%m-%d")
-            href    = link_el["href"]                  if link_el    else url
-
+        for link in title_links:
+            href = link["href"]
             if not href.startswith("http"):
                 href = "https://www.acbar.org" + href
+            if href in seen_urls:
+                continue
+            seen_urls.add(href)
 
-            if title and title != "N/A":
-                jobs.append({
-                    "title":   title,
-                    "company": company,
-                    "skills":  "NGO / Development",
-                    "date":    date,
-                    "url":     href,
-                    "source":  "acbar.org",
-                })
+            title = link.get_text(strip=True)
+            if not title:
+                continue
+
+            container = link.find_parent(["div", "li", "article"]) or link.parent
+            block_text = container.get_text(" ", strip=True) if container else ""
+
+            company = "N/A"
+            if "•" in block_text:
+                company = block_text.split("•")[0].replace(title, "").strip()
+
+            jobs.append({
+                "title":   title,
+                "company": company or "N/A",
+                "skills":  "NGO / Development",
+                "date":    datetime.now().strftime("%Y-%m-%d"),
+                "url":     href,
+                "source":  "acbar.org",
+            })
+
+        return jobs[:20]
     except Exception as e:
         print(f"[acbar.org] Error: {e}")
-    return jobs
+        return jobs
 
 
 # ── LinkedIn Afghanistan scraper ───────────────────────────────────────────────

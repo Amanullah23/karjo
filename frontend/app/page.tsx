@@ -289,7 +289,7 @@ export default function HomePage() {
               <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              href="https://t.me/Kar_Jo_Bot"
+              href="https://t.me/KarJoAfghanistan"
               target="_blank"
               className="group inline-flex items-center justify-center gap-2.5 bg-emerald text-white font-bold px-8 py-4 rounded-2xl hover:bg-emerald-dark transition-all hover:-translate-y-1 hover:shadow-2xl shadow-emerald/30 text-sm"
             >
@@ -515,12 +515,12 @@ export default function HomePage() {
             </p>
 
             <Link
-              href="https://t.me/Kar_Jo_Bot"
+              href="https://t.me/KarJoAfghanistan"
               target="_blank"
               className="group inline-flex items-center justify-center gap-3 bg-navy text-white font-bold px-10 py-4 rounded-2xl hover:bg-navy/90 transition-all hover:-translate-y-1 hover:shadow-xl shadow-navy/20 text-base mb-6"
             >
               <Bell size={20} className="text-emerald group-hover:animate-bounce" />
-              Start @Kar_Jo_Bot on Telegram
+              Start @KarJoAfghanistan on Telegram
               <ExternalLink size={15} className="opacity-50" />
             </Link>
 

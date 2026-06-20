@@ -35,7 +35,7 @@ export default function Navbar() {
       }`}
     >
       {/* Top accent bar */}
-      <div className="h-0.5 bg-gradient-to-r from-navy via-emerald to-navy" />
+      <div className="h-0.5 bg-linear-to-r from-navy via-emerald to-navy" />
 
       <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
@@ -89,7 +89,7 @@ export default function Navbar() {
             <span className="text-xs font-semibold text-emerald">247 live jobs</span>
           </div>
           <Link
-            href="https://t.me/Kar_Jo_Bot"
+            href="https://t.me/KarJoAfghanistan"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-navy text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-navy/90 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
@@ -153,7 +153,7 @@ export default function Navbar() {
                 <span className="text-xs font-semibold text-emerald">247 live jobs available</span>
               </div>
               <Link
-                href="https://t.me/Kar_Jo_Bot"
+                href="https://t.me/KarJoAfghanistan"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-navy text-white text-sm font-semibold px-4 py-3 rounded-xl hover:bg-navy/90 transition-all"
