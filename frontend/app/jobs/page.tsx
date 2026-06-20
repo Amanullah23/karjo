@@ -182,7 +182,7 @@ const { savedIds: saved, appliedIds: applied, toggleSave, toggleApply } = useJob
 
             {/* ── Pagination ── */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-10">
+              <div className="flex items-center justify-center flex-wrap gap-1.5 mt-10">
                 <button
                   onClick={() => goToPage(Math.max(1, page - 1))}
                   disabled={page === 1}
