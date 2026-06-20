@@ -266,7 +266,10 @@ export default function Navbar() {
           >
             <div className="px-4 py-4 space-y-1">
               {!loading && user && (
-                <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-cream rounded-xl">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 px-4 py-3 mb-2 bg-cream rounded-xl hover:bg-warm-gray/40 transition-colors"
+                >
                   <span className="w-9 h-9 rounded-full bg-navy text-white text-sm font-bold flex items-center justify-center shrink-0">
                     {(profile?.full_name || user.email || "?")
                       .charAt(0)
@@ -277,10 +280,10 @@ export default function Navbar() {
                       {profile?.full_name || "Account"}
                     </p>
                     <p className="text-xs text-warm-muted">
-                      {roleLabel(profile?.role)}
+                      {roleLabel(profile?.role)} · Tap to view profile
                     </p>
                   </div>
-                </div>
+                </Link>
               )}
 
               {navLinks.map((l) => {
