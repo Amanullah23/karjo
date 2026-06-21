@@ -220,7 +220,7 @@ export default function DashboardPage() {
                     },
                     {
                       label: "ACBAR Jobs",
-                      href: "https://acbar.org/jobs",
+                      href: "https://acbar.org/en/jobs",
                       external: true,
                     },
                   ].map((l) => (
