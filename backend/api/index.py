@@ -32,7 +32,7 @@ except ValueError:
     logger.error(f"CHAT_ID must be numeric. Got: '{CHAT_ID_RAW}'")
     sys.exit(1)
 
-telegram_app = Application.builder().token(BOT_TOKEN).build()
+telegram_app = Application.builder().token(BOT_TOKEN).updater(None).build()
 
 
 def format_job_message(jobs: list[dict], title: str) -> list[str]:
@@ -146,13 +146,15 @@ telegram_app.add_handler(CommandHandler("refresh", refresh_command))
 
 
 # ── FastAPI app (Vercel entrypoint) ───────────────────────────────────────────
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await telegram_app.initialize()
-    yield
-    await telegram_app.shutdown()
+app = FastAPI()
 
-app = FastAPI(lifespan=lifespan)
+_initialized = False
+
+async def ensure_initialized():
+    global _initialized
+    if not _initialized:
+        await telegram_app.initialize()
+        _initialized = True
 
 @app.get("/api")
 async def health():
@@ -160,6 +162,7 @@ async def health():
 
 @app.post("/api/webhook")
 async def webhook(request: Request):
+    await ensure_initialized()
     data = await request.json()
     update = Update.de_json(data, telegram_app.bot)
     await telegram_app.process_update(update)
@@ -169,6 +172,7 @@ async def webhook(request: Request):
 async def daily_digest(authorization: str = Header(None)):
     if CRON_SECRET and authorization != f"Bearer {CRON_SECRET}":
         raise HTTPException(status_code=401, detail="Unauthorized")
+    await ensure_initialized()
 
     logger.info("Running scheduled daily digest...")
     jobs      = collect_all_jobs()
