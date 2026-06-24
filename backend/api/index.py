@@ -8,7 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from scraper import collect_all_jobs
-from database import save_jobs, get_latest_jobs, get_todays_jobs, get_user_language, save_user_language
+from database import get_all_active_users, save_jobs, get_latest_jobs, get_todays_jobs, get_user_language, save_user_language
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -305,6 +305,12 @@ async def daily_digest(authorization: str = Header(None)):
         await telegram_app.bot.send_message(
             chat_id=CHAT_ID, text=msg, parse_mode="Markdown", disable_web_page_preview=True
         )
+
+@app.get("/api/debug-users")
+async def debug_users():
+    await ensure_initialized()
+    users = get_all_active_users()
+    return {"users": users, "count": len(users)}
 
     logger.info(f"Daily digest sent — {new_count} new jobs.")
     return {"ok": True, "new_jobs": new_count}
