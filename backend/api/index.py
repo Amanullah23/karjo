@@ -267,7 +267,7 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(t(uid, "searching"))
     jobs = search_jobs(keyword)
-    title = f"{t(uid, 'search_title')} "{keyword}""
+    title = f"{t(uid, 'search_title')} \"{keyword}\""
     for msg in format_job_message(jobs, title, t(uid, "footer"), t(uid, "no_results")):
         await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
