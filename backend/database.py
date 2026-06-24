@@ -22,23 +22,77 @@ BASE = f"{SUPABASE_URL}/rest/v1"
 
 
 def _safe_list(res: requests.Response, context: str) -> list[dict]:
-    """Parse a Supabase response, guaranteeing a list of dicts or [] — never crashes the caller."""
     try:
         data = res.json()
     except ValueError:
         logger.error(f"[DB] {context}: non-JSON response (status {res.status_code}): {res.text[:300]}")
         return []
-
     if isinstance(data, list):
         return data
-
-    # Supabase returns a dict on errors (bad key, bad URL, RLS denial, etc.)
-    logger.error(f"[DB] {context}: expected a list, got {type(data).__name__} (status {res.status_code}): {data}")
+    logger.error(f"[DB] {context}: expected list, got {type(data).__name__} (status {res.status_code}): {data}")
     return []
 
 
+# ── User / Language ────────────────────────────────────────────────────────────
+
+def get_user_language(telegram_id: int) -> str:
+    """Return 'fa' or 'en' for a telegram user. Defaults to 'en' if not found."""
+    try:
+        res = requests.get(
+            f"{BASE}/profiles",
+            headers=HEADERS,
+            params={
+                "telegram_id": f"eq.{telegram_id}",
+                "select": "language",
+                "limit": 1,
+            },
+        )
+        rows = _safe_list(res, "get_user_language")
+        if rows:
+            return rows[0].get("language", "en")
+    except Exception as e:
+        logger.error(f"[DB] get_user_language error: {e}")
+    return "en"
+
+
+def save_user_language(telegram_id: int, username: str | None, language: str):
+    """Upsert user row with telegram_id and language preference."""
+    try:
+        # Check if user exists
+        res = requests.get(
+            f"{BASE}/profiles",
+            headers=HEADERS,
+            params={"telegram_id": f"eq.{telegram_id}", "select": "id", "limit": 1},
+        )
+        rows = _safe_list(res, "save_user_language check")
+
+        if rows:
+            # Update existing
+            requests.patch(
+                f"{BASE}/profiles",
+                headers={**HEADERS, "Prefer": "return=minimal"},
+                params={"telegram_id": f"eq.{telegram_id}"},
+                json={"language": language},
+            )
+        else:
+            # Insert new user
+            requests.post(
+                f"{BASE}/profiles",
+                headers={**HEADERS, "Prefer": "return=minimal"},
+                json={
+                    "telegram_id": telegram_id,
+                    "telegram_username": username or "",
+                    "language": language,
+                },
+            )
+        logger.info(f"[DB] Saved language '{language}' for telegram_id {telegram_id}")
+    except Exception as e:
+        logger.error(f"[DB] save_user_language error: {e}")
+
+
+# ── Jobs ───────────────────────────────────────────────────────────────────────
+
 def save_jobs(jobs: list[dict]) -> int:
-    """Save new jobs to Supabase, skip duplicates. Returns count of new jobs saved."""
     new_count = 0
     for job in jobs:
         try:
@@ -46,16 +100,14 @@ def save_jobs(jobs: list[dict]) -> int:
                 f"{BASE}/jobs",
                 headers=HEADERS,
                 params={
-                    "title": f"eq.{job['title']}",
+                    "title":   f"eq.{job['title']}",
                     "company": f"eq.{job['company']}",
-                    "source": f"eq.{job['source']}",
-                    "select": "id",
+                    "source":  f"eq.{job['source']}",
+                    "select":  "id",
                 },
             )
-            existing = _safe_list(res, "save_jobs duplicate check")
-            if existing:
-                continue  # skip duplicate
-
+            if _safe_list(res, "save_jobs duplicate check"):
+                continue
             requests.post(
                 f"{BASE}/jobs",
                 headers=HEADERS,
@@ -75,7 +127,6 @@ def save_jobs(jobs: list[dict]) -> int:
 
 
 def get_latest_jobs(limit: int = 20) -> list[dict]:
-    """Get latest jobs ordered by created_at."""
     try:
         res = requests.get(
             f"{BASE}/jobs",
@@ -89,7 +140,6 @@ def get_latest_jobs(limit: int = 20) -> list[dict]:
 
 
 def get_todays_jobs() -> list[dict]:
-    """Get only today's jobs."""
     today = date.today().isoformat()
     try:
         res = requests.get(
@@ -97,8 +147,8 @@ def get_todays_jobs() -> list[dict]:
             headers=HEADERS,
             params={
                 "created_at": f"gte.{today}T00:00:00",
-                "order": "created_at.desc",
-                "select": "*",
+                "order":      "created_at.desc",
+                "select":     "*",
             },
         )
         return _safe_list(res, "get_todays_jobs")
