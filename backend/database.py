@@ -58,7 +58,7 @@ def get_user_language(telegram_id: int) -> str:
 def save_user_language(telegram_id: int, username: str | None, language: str):
     """Upsert user row with telegram_id and language preference."""
     try:
-        # Check if user exists
+        # Check if user exists first
         res = requests.get(
             f"{BASE}/profiles",
             headers=HEADERS,
@@ -67,25 +67,28 @@ def save_user_language(telegram_id: int, username: str | None, language: str):
         rows = _safe_list(res, "save_user_language check")
 
         if rows:
-            # Update existing
-            requests.patch(
+            # User exists — just update language
+            patch_res = requests.patch(
                 f"{BASE}/profiles",
-                headers={**HEADERS, "Prefer": "return=minimal"},
+                headers={**HEADERS, "Prefer": "return=representation"},
                 params={"telegram_id": f"eq.{telegram_id}"},
                 json={"language": language},
             )
+            logger.info(f"[DB] Updated language '{language}' for telegram_id {telegram_id} — status {patch_res.status_code}")
         else:
-            # Insert new user
-            requests.post(
+            # New user — insert with generated UUID
+            import uuid
+            post_res = requests.post(
                 f"{BASE}/profiles",
-                headers={**HEADERS, "Prefer": "return=minimal"},
+                headers={**HEADERS, "Prefer": "return=representation"},
                 json={
+                    "id": str(uuid.uuid4()),
                     "telegram_id": telegram_id,
                     "telegram_username": username or "",
                     "language": language,
                 },
             )
-        logger.info(f"[DB] Saved language '{language}' for telegram_id {telegram_id}")
+            logger.info(f"[DB] Inserted new user telegram_id {telegram_id} lang '{language}' — status {post_res.status_code}: {post_res.text[:200]}")
     except Exception as e:
         logger.error(f"[DB] save_user_language error: {e}")
 
