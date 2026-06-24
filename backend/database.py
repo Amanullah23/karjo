@@ -48,8 +48,8 @@ def get_user_language(telegram_id: int) -> str:
     """Return 'fa' or 'en' for a telegram user. Defaults to 'en' if not found."""
     try:
         res = requests.get(
-            f"{BASE}/profiles",
-            headers=SERVICE_HEADERS,
+            f"{BASE}/bot_users",
+            headers=HEADERS,
             params={
                 "telegram_id": f"eq.{telegram_id}",
                 "select": "language",
@@ -65,39 +65,18 @@ def get_user_language(telegram_id: int) -> str:
 
 
 def save_user_language(telegram_id: int, username: str | None, language: str):
-    """Upsert user row with telegram_id and language preference."""
+    """Upsert user row with telegram_id and language preference into bot_users table."""
     try:
-        # Check if user exists first
-        res = requests.get(
-            f"{BASE}/profiles",
-            headers=SERVICE_HEADERS,
-            params={"telegram_id": f"eq.{telegram_id}", "select": "id", "limit": 1},
+        upsert_res = requests.post(
+            f"{BASE}/bot_users",
+            headers={**HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal"},
+            json={
+                "telegram_id": telegram_id,
+                "telegram_username": username or "",
+                "language": language,
+            },
         )
-        rows = _safe_list(res, "save_user_language check")
-
-        if rows:
-            # User exists — just update language
-            patch_res = requests.patch(
-                f"{BASE}/profiles",
-                headers={**SERVICE_HEADERS, "Prefer": "return=representation"},
-                params={"telegram_id": f"eq.{telegram_id}"},
-                json={"language": language},
-            )
-            logger.info(f"[DB] Updated language '{language}' for telegram_id {telegram_id} — status {patch_res.status_code}")
-        else:
-            # New user — insert with generated UUID
-            import uuid
-            post_res = requests.post(
-                f"{BASE}/profiles",
-                headers={**SERVICE_HEADERS, "Prefer": "return=representation"},
-                json={
-                    "id": str(uuid.uuid4()),
-                    "telegram_id": telegram_id,
-                    "telegram_username": username or "",
-                    "language": language,
-                },
-            )
-            logger.info(f"[DB] Inserted new user telegram_id {telegram_id} lang '{language}' — status {post_res.status_code}: {post_res.text[:200]}")
+        logger.info(f"[DB] Upserted bot_user telegram_id {telegram_id} lang '{language}' — status {upsert_res.status_code}: {upsert_res.text[:200]}")
     except Exception as e:
         logger.error(f"[DB] save_user_language error: {e}")
 
