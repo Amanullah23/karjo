@@ -2,22 +2,20 @@
 
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { useJobActions } from "@/lib/use-job-actions";
 import {
   Briefcase, Zap, Bell, Filter, ArrowRight, TrendingUp,
   ExternalLink, ChevronDown, Sparkles, Clock, Shield
 } from "lucide-react";
-
 import { supabase } from "@/lib/supabase";
 import { Job } from "@/types";
 import JobCard from "@/components/JobCard";
 import { useState, useRef, useEffect } from "react";
+import { useLang } from "@/lib/language-context";
 
 // ── Animated counter ───────────────────────────────────────────────────────────
 function Counter({ to, duration = 2 }: { to: number; duration?: number }) {
   const [count,   setCount]   = useState(0);
   const [mounted, setMounted] = useState(false);
-  const { savedIds: saved, appliedIds: applied, toggleSave, toggleApply } = useJobActions();
 
   useEffect(() => {
     setMounted(true);
@@ -50,7 +48,6 @@ function ParticleField() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />
-
       <motion.div
         className="absolute -top-32 -right-32 w-175 h-175 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(5,150,105,0.18) 0%, transparent 65%)" }}
@@ -69,43 +66,22 @@ function ParticleField() {
         animate={{ scale: [1, 1.08, 1], rotate: [0, -5, 0] }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
-
       {particles.map((p) => (
         <motion.div
           key={p.id}
           className="absolute rounded-full bg-emerald"
-          style={{
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-            opacity: p.opacity,
-          }}
-          animate={{
-            y: [0, -40, 0],
-            opacity: [p.opacity, p.opacity * 2.5, p.opacity],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: p.delay,
-          }}
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, opacity: p.opacity }}
+          animate={{ y: [0, -40, 0], opacity: [p.opacity, p.opacity * 2.5, p.opacity], scale: [1, 1.5, 1] }}
+          transition={{ duration: p.duration, repeat: Infinity, ease: "easeInOut", delay: p.delay }}
         />
       ))}
-
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)
-          `,
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
           backgroundSize: "80px 80px",
         }}
       />
-
       <motion.div
         className="absolute top-1/2 left-0 right-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent, rgba(5,150,105,0.3), transparent)" }}
@@ -122,9 +98,9 @@ function FloatingCard({ job, delay, x, y, rotate }: {
   delay: number; x: number; y: number; rotate: number;
 }) {
   const sourceColor: Record<string, string> = {
-    "jobs.af":  "bg-blue-500",
-    "acbar.org":"bg-purple-500",
-    "LinkedIn": "bg-sky-500",
+    "jobs.af":   "bg-blue-500",
+    "acbar.org": "bg-purple-500",
+    "LinkedIn":  "bg-sky-500",
   };
   return (
     <motion.div
@@ -150,50 +126,24 @@ function FloatingCard({ job, delay, x, y, rotate }: {
   );
 }
 
-const features = [
-  {
-    icon: <Zap size={20} />,
-    title: "Auto-scraped daily",
-    desc: "Jobs collected every morning from jobs.af, ACBAR, and LinkedIn — zero manual effort.",
-    iconBg: "bg-blue-600",
-  },
-  {
-    icon: <Bell size={20} />,
-    title: "Telegram delivery",
-    desc: "Get fresh Afghan opportunities sent straight to your Telegram at 8 AM every morning.",
-    iconBg: "bg-emerald",
-  },
-  {
-    icon: <Filter size={20} />,
-    title: "Smart filters",
-    desc: "Filter by source, skills, and category. Find the right job in seconds.",
-    iconBg: "bg-purple-600",
-  },
-  {
-    icon: <TrendingUp size={20} />,
-    title: "Application tracking",
-    desc: "Save jobs and track every application in one clean dashboard.",
-    iconBg: "bg-amber-500",
-  },
-];
-
 const floatingJobs = [
-  { title: "Senior Developer",  company: "Afghan Telecom",    source: "jobs.af",   x: 2,  y: 18, rotate: -6, delay: 0.4 },
-  { title: "Project Manager",   company: "UNDP Afghanistan",  source: "acbar.org", x: 72, y: 12, rotate: 5,  delay: 0.7 },
-  { title: "Data Analyst",      company: "Ministry of Finance",source: "LinkedIn", x: 68, y: 65, rotate: -4, delay: 1.0 },
+  { title: "Senior Developer",  company: "Afghan Telecom",     source: "jobs.af",   x: 2,  y: 18, rotate: -6, delay: 0.4 },
+  { title: "Project Manager",   company: "UNDP Afghanistan",   source: "acbar.org", x: 72, y: 12, rotate: 5,  delay: 0.7 },
+  { title: "Data Analyst",      company: "Ministry of Finance", source: "LinkedIn", x: 68, y: 65, rotate: -4, delay: 1.0 },
 ];
 
 export default function HomePage() {
-  const [saved,   setSaved]   = useState<string[]>([]);
-  const [applied, setApplied] = useState<string[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const { t } = useLang();
+  const [saved,    setSaved]    = useState<string[]>([]);
+  const [applied,  setApplied]  = useState<string[]>([]);
+  const [mounted,  setMounted]  = useState(false);
   const [featured, setFeatured] = useState<Job[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const rawY    = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const rawOpa  = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
+  const rawY   = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const rawOpa = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
   const heroY   = useSpring(rawY,   { stiffness: 60, damping: 20 });
   const heroOpa = useSpring(rawOpa, { stiffness: 60, damping: 20 });
 
@@ -201,16 +151,9 @@ export default function HomePage() {
 
   useEffect(() => {
     async function fetchFeatured() {
-      const { data } = await supabase
-        .from("jobs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(6);
+      const { data } = await supabase.from("jobs").select("*").order("created_at", { ascending: false }).limit(6);
       setFeatured(data ?? []);
-
-      const { count } = await supabase
-        .from("jobs")
-        .select("*", { count: "exact", head: true });
+      const { count } = await supabase.from("jobs").select("*", { count: "exact", head: true });
       setTotalCount(count ?? 0);
     }
     fetchFeatured();
@@ -219,28 +162,24 @@ export default function HomePage() {
   const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
 
+  const features = [
+    { icon: <Zap size={20} />,       title: t("feat1.title"), desc: t("feat1.desc"), iconBg: "bg-blue-600" },
+    { icon: <Bell size={20} />,      title: t("feat2.title"), desc: t("feat2.desc"), iconBg: "bg-emerald" },
+    { icon: <Filter size={20} />,    title: t("feat3.title"), desc: t("feat3.desc"), iconBg: "bg-purple-600" },
+    { icon: <TrendingUp size={20} />,title: t("feat4.title"), desc: t("feat4.desc"), iconBg: "bg-amber-500" },
+  ];
+
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
 
-      {/* ══════════════════════════════════════════════════════════════
-          HERO
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ HERO ══ */}
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-
-        {/* Only render random particles after mount */}
         {mounted && <ParticleField />}
+        {!mounted && <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />}
 
-        {/* Static dark bg shown on server */}
-        {!mounted && (
-          <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />
-        )}
-
-        {/* Floating preview cards — desktop only, client only */}
         {mounted && (
           <div className="hidden lg:block absolute inset-0 pointer-events-none z-10">
-            {floatingJobs.map((j) => (
-              <FloatingCard key={j.title} job={j} {...j} />
-            ))}
+            {floatingJobs.map((j) => <FloatingCard key={j.title} job={j} {...j} />)}
           </div>
         )}
 
@@ -248,7 +187,6 @@ export default function HomePage() {
           style={{ y: heroY, opacity: heroOpa }}
           className="relative z-20 text-center max-w-4xl mx-auto pt-24 pb-12"
         >
-          {/* Eyebrow badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -256,11 +194,10 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold px-4 py-2 rounded-full mb-8"
           >
             <Sparkles size={12} className="text-emerald" />
-            Afghanistan's first automated job digest
+            {t("hero.badge")}
             <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
           </motion.div>
 
-          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -268,10 +205,10 @@ export default function HomePage() {
             className="font-display font-bold text-white leading-[1.03] tracking-tight mb-6"
             style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)" }}
           >
-            Every Afghan Job,{" "}
+            {t("hero.headline1")}{" "}
             <br className="hidden sm:block" />
             <span className="relative">
-              <span className="text-emerald">One Place.</span>
+              <span className="text-emerald">{t("hero.headline2")}</span>
               <motion.span
                 className="absolute -bottom-1 left-0 right-0 h-0.75 bg-emerald/40 rounded-full"
                 initial={{ scaleX: 0 }}
@@ -282,20 +219,15 @@ export default function HomePage() {
             </span>
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-white/55 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10"
           >
-            KarJo scrapes <span className="text-white/80 font-medium">jobs.af</span>,{" "}
-            <span className="text-white/80 font-medium">ACBAR</span>, and{" "}
-            <span className="text-white/80 font-medium">LinkedIn</span> every morning
-            and delivers the freshest Afghan opportunities straight to your Telegram.
+            {t("hero.subtitle")}
           </motion.p>
 
-          {/* CTA buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -307,7 +239,7 @@ export default function HomePage() {
               className="group inline-flex items-center justify-center gap-2.5 bg-white text-navy font-bold px-8 py-4 rounded-2xl hover:bg-white/90 transition-all hover:-translate-y-1 hover:shadow-2xl shadow-black/20 text-sm"
             >
               <Briefcase size={16} />
-              Browse All Jobs
+              {t("hero.browse")}
               <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -316,12 +248,11 @@ export default function HomePage() {
               className="group inline-flex items-center justify-center gap-2.5 bg-emerald text-white font-bold px-8 py-4 rounded-2xl hover:bg-emerald-dark transition-all hover:-translate-y-1 hover:shadow-2xl shadow-emerald/30 text-sm"
             >
               <Bell size={16} className="group-hover:animate-bounce" />
-              Get Daily Telegram Alerts
+              {t("hero.telegram")}
               <ExternalLink size={13} className="opacity-60" />
             </Link>
           </motion.div>
 
-          {/* Trust row */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -329,19 +260,18 @@ export default function HomePage() {
             className="flex items-center justify-center gap-6 flex-wrap"
           >
             {[
-              { icon: <Clock size={13} />,    text: "Updated at 8 AM daily" },
-              { icon: <Shield size={13} />,   text: "Free forever" },
-              { icon: <Sparkles size={13} />, text: `${totalCount} jobs available now` },
-            ].map((t) => (
-              <div key={t.text} className="flex items-center gap-1.5 text-white/40 text-xs">
-                <span className="text-emerald">{t.icon}</span>
-                {t.text}
+              { icon: <Clock size={13} />,    text: t("hero.trust1") },
+              { icon: <Shield size={13} />,   text: t("hero.trust2") },
+              { icon: <Sparkles size={13} />, text: `${totalCount} ${t("hero.trust3")}` },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-1.5 text-white/40 text-xs">
+                <span className="text-emerald">{item.icon}</span>
+                {item.text}
               </div>
             ))}
           </motion.div>
         </motion.div>
 
-        {/* Scroll cue */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1"
           animate={{ y: [0, 8, 0] }}
@@ -349,21 +279,19 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
         >
-          <span className="text-white/30 text-[10px] tracking-widest uppercase">Scroll</span>
+          <span className="text-white/30 text-[10px] tracking-widest uppercase">{t("hero.scroll")}</span>
           <ChevronDown size={18} className="text-white/30" />
         </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          STATS BAR
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ STATS BAR ══ */}
       <section className="bg-white border-y border-warm-gray py-10 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: 500, suffix: "+",  label: "Jobs tracked",   color: "text-navy" },
-            { value: 3,   suffix: "",   label: "Job sources",    color: "text-navy" },
-            { value: 100, suffix: "%",  label: "Free forever",   color: "text-emerald" },
-            { value: 8,   suffix: "AM", label: "Daily delivery", color: "text-navy" },
+            { value: 500, suffix: "+",  label: t("stats.jobs"),     color: "text-navy" },
+            { value: 3,   suffix: "",   label: t("stats.sources"),  color: "text-navy" },
+            { value: 100, suffix: "%",  label: t("stats.free"),     color: "text-emerald" },
+            { value: 8,   suffix: "AM", label: t("stats.delivery"), color: "text-navy" },
           ].map((s, i) => (
             <motion.div
               key={s.label}
@@ -382,9 +310,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          LATEST JOBS
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ LATEST JOBS ══ */}
       <section className="max-w-7xl mx-auto px-6 py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -395,18 +321,18 @@ export default function HomePage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
-              <p className="text-xs font-bold tracking-widest uppercase text-emerald">Live Now</p>
+              <p className="text-xs font-bold tracking-widest uppercase text-emerald">{t("latest.live")}</p>
             </div>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-navy leading-tight">
-              Fresh Opportunities
+              {t("latest.title")}
             </h2>
-            <p className="text-charcoal/50 text-sm mt-2">Scraped and verified every morning</p>
+            <p className="text-charcoal/50 text-sm mt-2">{t("latest.subtitle")}</p>
           </div>
           <Link
             href="/jobs"
             className="group hidden sm:flex items-center gap-2 bg-navy text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-navy/90 transition-all hover:-translate-y-0.5"
           >
-            All jobs <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            {t("latest.all")} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </motion.div>
 
@@ -440,26 +366,20 @@ export default function HomePage() {
             href="/jobs"
             className="inline-flex items-center gap-2 border-2 border-navy text-navy font-bold px-8 py-3.5 rounded-2xl hover:bg-navy hover:text-white transition-all duration-200"
           >
-            View all {totalCount} jobs <ArrowRight size={16} />
+            {t("latest.view_all")} {totalCount} {t("latest.jobs")} <ArrowRight size={16} />
           </Link>
         </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          FEATURES
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ FEATURES ══ */}
       <section className="py-24 px-6 bg-navy relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`,
-            backgroundSize: "32px 32px",
-          }}
+          style={{ backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`, backgroundSize: "32px 32px" }}
         />
         <motion.div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-1 rounded-full"
           style={{ background: "linear-gradient(90deg, transparent, rgba(5,150,105,0.6), transparent)" }}
         />
-
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -467,13 +387,11 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs font-bold tracking-widest uppercase text-emerald mb-3">Why KarJo</p>
+            <p className="text-xs font-bold tracking-widest uppercase text-emerald mb-3">{t("features.label")}</p>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
-              Stop searching.<br />Start finding.
+              {t("features.title1")}<br />{t("features.title2")}
             </h2>
-            <p className="text-white/40 max-w-lg mx-auto text-sm leading-relaxed">
-              Built for Afghan job seekers who are tired of opening 5 different websites every single morning.
-            </p>
+            <p className="text-white/40 max-w-lg mx-auto text-sm leading-relaxed">{t("features.subtitle")}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -500,9 +418,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          TELEGRAM CTA
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ TELEGRAM CTA ══ */}
       <section className="py-28 px-6 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
@@ -512,7 +428,6 @@ export default function HomePage() {
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
-
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -530,10 +445,10 @@ export default function HomePage() {
             </motion.div>
 
             <h2 className="font-display text-4xl md:text-5xl font-bold text-navy mb-4 leading-tight">
-              Jobs in your Telegram,<br />every morning.
+              {t("cta.title1")}<br />{t("cta.title2")}
             </h2>
             <p className="text-charcoal/55 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-              Start the KarJo bot and receive the freshest Afghan opportunities at 8:00 AM daily — no sign-up, no fees, forever free.
+              {t("cta.subtitle")}
             </p>
 
             <Link
@@ -542,15 +457,15 @@ export default function HomePage() {
               className="group inline-flex items-center justify-center gap-3 bg-navy text-white font-bold px-10 py-4 rounded-2xl hover:bg-navy/90 transition-all hover:-translate-y-1 hover:shadow-xl shadow-navy/20 text-base mb-6"
             >
               <Bell size={20} className="text-emerald group-hover:animate-bounce" />
-              Start @KarJoAfghanistan on Telegram
+              {t("cta.button")}
               <ExternalLink size={15} className="opacity-50" />
             </Link>
 
             <div className="flex items-center justify-center gap-6 flex-wrap">
-              {["Free forever", "No sign-up required", "Cancel anytime"].map((t) => (
-                <span key={t} className="flex items-center gap-1.5 text-xs text-warm-muted">
+              {[t("cta.trust1"), t("cta.trust2"), t("cta.trust3")].map((text) => (
+                <span key={text} className="flex items-center gap-1.5 text-xs text-warm-muted">
                   <span className="w-1 h-1 bg-emerald rounded-full" />
-                  {t}
+                  {text}
                 </span>
               ))}
             </div>
@@ -558,9 +473,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          FOOTER
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ FOOTER ══ */}
       <footer className="bg-navy border-t border-white/5 py-12 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
@@ -576,10 +489,10 @@ export default function HomePage() {
 
             <div className="flex items-center gap-6">
               {[
-                { href: "/jobs",      label: "Browse Jobs" },
-                { href: "/dashboard", label: "Dashboard" },
-                { href: "/saved",     label: "Saved" },
-                { href: "/applied",   label: "Applied" },
+                { href: "/jobs",      label: t("nav.jobs") },
+                { href: "/dashboard", label: t("nav.dashboard") },
+                { href: "/saved",     label: t("nav.saved") },
+                { href: "/applied",   label: t("nav.applied") },
               ].map((l) => (
                 <Link key={l.href} href={l.href} className="text-xs text-white/40 hover:text-white transition-colors font-medium">
                   {l.label}
@@ -589,7 +502,7 @@ export default function HomePage() {
 
             <div className="flex items-center gap-3">
               {[
-                { href: "https://jobs.af",       label: "jobs.af" },
+                { href: "https://jobs.af",        label: "jobs.af" },
                 { href: "https://acbar.org/jobs", label: "ACBAR" },
               ].map((l) => (
                 <Link
@@ -605,9 +518,9 @@ export default function HomePage() {
           </div>
 
           <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-white/25 text-xs">© 2026 KarJo — کارجو. All rights reserved.</p>
+            <p className="text-white/25 text-xs">{t("footer.rights")}</p>
             <p className="text-white/25 text-xs">
-              Built with ❤️ by{" "}
+              {t("footer.built")}{" "}
               <Link href="https://yawari.vercel.app" target="_blank" className="text-white/50 hover:text-emerald transition-colors font-semibold">
                 Amanullah Yawari
               </Link>

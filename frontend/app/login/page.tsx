@@ -6,16 +6,18 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useLang } from "@/lib/language-context";
 
 export default function LoginPage() {
   const router = useRouter();
   const { signIn, signInWithGoogle } = useAuth();
+  const { t } = useLang();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email,        setEmail]        = useState("");
+  const [password,     setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
+  const [loading,      setLoading]      = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,11 +25,8 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
-    if (error) {
-      setError(error);
-    } else {
-      router.push("/dashboard");
-    }
+    if (error) setError(error);
+    else router.push("/dashboard");
   }
 
   return (
@@ -38,8 +37,8 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md bg-white border border-warm-gray rounded-2xl p-8"
       >
-        <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">Welcome back</p>
-        <h1 className="font-display text-3xl font-bold text-navy mb-6">Log in to KarJo</h1>
+        <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">{t("login.welcome")}</p>
+        <h1 className="font-display text-3xl font-bold text-navy mb-6">{t("login.title")}</h1>
 
         <button
           type="button"
@@ -52,42 +51,42 @@ export default function LoginPage() {
             <path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/>
             <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
           </svg>
-          Continue with Google
+          {t("login.google")}
         </button>
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-warm-gray" />
-          <span className="text-xs text-warm-muted">or</span>
+          <span className="text-xs text-warm-muted">{t("login.or")}</span>
           <div className="flex-1 h-px bg-warm-gray" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
+            <Mail size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
+              placeholder={t("login.email_ph")}
+              className="w-full ps-10 pe-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
             />
           </div>
 
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
+            <Lock size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
               type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
+              placeholder={t("login.password_ph")}
+              className="w-full ps-10 pe-10 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
             />
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
+              className="absolute end-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -100,14 +99,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-navy text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-navy/90 transition-all disabled:opacity-60"
           >
-            {loading ? "Logging in..." : "Log In"}
+            {loading ? t("login.logging_in") : t("login.submit")}
           </button>
         </form>
 
         <p className="text-sm text-warm-muted text-center mt-6">
-          Don't have an account?{" "}
+          {t("login.no_account")}{" "}
           <Link href="/signup" className="text-emerald font-semibold hover:underline">
-            Sign up
+            {t("login.signup")}
           </Link>
         </p>
       </motion.div>

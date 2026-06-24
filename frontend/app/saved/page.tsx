@@ -10,12 +10,14 @@ import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Job } from "@/types";
+import { useLang } from "@/lib/language-context";
 
 function SavedJobsContent() {
   const { user } = useAuth();
+  const { t } = useLang();
   const { savedIds, appliedIds, toggleSave, toggleApply } = useJobActions();
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
     async function fetchSavedJobs() {
@@ -26,7 +28,6 @@ function SavedJobsContent() {
         .select("job_id, jobs(*)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-
       const jobs = (data ?? []).map((row: any) => row.jobs).filter(Boolean) as Job[];
       setSavedJobs(jobs);
       setLoading(false);
@@ -38,23 +39,25 @@ function SavedJobsContent() {
     <div className="min-h-screen bg-cream pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-8">
-          <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">Your List</p>
-          <h1 className="font-display text-4xl font-bold text-navy mb-2">Saved Jobs</h1>
+          <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">{t("saved.your_list")}</p>
+          <h1 className="font-display text-4xl font-bold text-navy mb-2">{t("saved.title")}</h1>
           <p className="text-charcoal/60 text-sm">
-            {loading ? "Loading…" : `${savedJobs.length} saved job${savedJobs.length !== 1 ? "s" : ""}`}
+            {loading
+              ? t("saved.loading")
+              : `${savedJobs.length} ${savedJobs.length !== 1 ? t("saved.count") : t("saved.count_one")}`}
           </p>
         </div>
 
         {!loading && savedJobs.length === 0 ? (
           <div className="text-center py-24 bg-white border border-warm-gray rounded-2xl">
             <Bookmark size={40} className="text-warm-gray mx-auto mb-4" />
-            <p className="font-display text-2xl font-bold text-navy mb-2">No saved jobs yet</p>
-            <p className="text-warm-muted text-sm mb-6">Bookmark jobs you're interested in and they'll appear here.</p>
+            <p className="font-display text-2xl font-bold text-navy mb-2">{t("saved.empty_title")}</p>
+            <p className="text-warm-muted text-sm mb-6">{t("saved.empty_sub")}</p>
             <Link
               href="/jobs"
               className="inline-flex items-center gap-2 bg-navy text-white font-semibold px-6 py-3 rounded-xl hover:bg-navy/90 transition-all"
             >
-              Browse Jobs
+              {t("saved.browse")}
             </Link>
           </div>
         ) : (
