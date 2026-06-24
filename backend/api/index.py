@@ -8,7 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from scraper import collect_all_jobs
-from database import save_jobs, get_latest_jobs, get_todays_jobs, get_user_language, save_user_language
+from database import save_jobs, get_latest_jobs, get_todays_jobs, get_user_language, save_user_language, get_all_active_users, deactivate_user, search_jobs
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -82,6 +82,10 @@ TEXTS = {
         "today_title":    "Today's New Jobs",
         "footer":         "karjo.vercel.app  ·  @Kar_Jo_Bot",
         "lang_saved":     "✅ Language set to English!",
+        "search_prompt":  "🔍 Please provide a keyword\nExample: /search python",
+        "search_title":   "Search results for",
+        "no_results":     "😔 No jobs found for that keyword\n\nTry a different search term or use /jobs to see all jobs",
+        "searching":      "⏳ Searching...",
     },
     "fa": {
         "welcome": (
@@ -128,6 +132,10 @@ TEXTS = {
         "today_title":    "وظایف امروز",
         "footer":         "karjo.vercel.app  ·  @Kar_Jo_Bot",
         "lang_saved":     "✅ زبان به دری تنظیم شد!",
+        "search_prompt":  "🔍 کلیدواژه مورد جستجو را بنویسید\nمثال: /search انجینیر",
+        "search_title":   "نتایج جستجو برای",
+        "no_results":     "😔 وظیفه‌ای برای این کلیدواژه یافت نشد\n\nکلیدواژه دیگری امتحان کنید یا از /jobs استفاده کنید",
+        "searching":      "⏳ در حال جستجو...",
     },
 }
 
@@ -249,6 +257,21 @@ async def refresh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
 
 
+async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    keyword = " ".join(context.args).strip()
+
+    if not keyword:
+        await update.message.reply_text(t(uid, "search_prompt"), parse_mode="Markdown")
+        return
+
+    await update.message.reply_text(t(uid, "searching"))
+    jobs = search_jobs(keyword)
+    title = f"{t(uid, 'search_title')} "{keyword}""
+    for msg in format_job_message(jobs, title, t(uid, "footer"), t(uid, "no_results")):
+        await update.message.reply_text(msg, parse_mode="Markdown", disable_web_page_preview=True)
+
+
 # ── Register handlers ──────────────────────────────────────────────────────────
 
 telegram_app.add_handler(CommandHandler("start",    start))
@@ -258,6 +281,7 @@ telegram_app.add_handler(CommandHandler("jobs",     jobs_command))
 telegram_app.add_handler(CommandHandler("today",    today_command))
 telegram_app.add_handler(CommandHandler("refresh",  refresh_command))
 telegram_app.add_handler(CommandHandler("language", language_command))
+telegram_app.add_handler(CommandHandler("search",   search_command))
 telegram_app.add_handler(CallbackQueryHandler(language_callback, pattern="^lang_"))
 
 
@@ -296,16 +320,34 @@ async def daily_digest(authorization: str = Header(None)):
     new_count = save_jobs(jobs)
     latest    = get_latest_jobs(limit=20)
 
-    for msg in format_job_message(
-        latest,
-        title=f"Daily Digest ({new_count} new)",
-        footer="karjo.vercel.app  ·  @Kar_Jo_Bot",
-        no_jobs_text="No new jobs today.",
-    ):
-        await telegram_app.bot.send_message(
-            chat_id=CHAT_ID, text=msg, parse_mode="Markdown", disable_web_page_preview=True
-        )
+    users       = get_all_active_users()
+    sent_count  = 0
+    failed_count = 0
 
+    for user in users:
+        uid  = user["telegram_id"]
+        lang = user.get("language", "en")
+        title = TEXTS[lang]["jobs_title"] + f" ({new_count} new)"
+        footer = TEXTS[lang]["footer"]
+        no_jobs = TEXTS[lang]["no_jobs"]
 
-    logger.info(f"Daily digest sent — {new_count} new jobs.")
-    return {"ok": True, "new_jobs": new_count}
+        try:
+            for msg in format_job_message(latest, title, footer, no_jobs):
+                await telegram_app.bot.send_message(
+                    chat_id=uid,
+                    text=msg,
+                    parse_mode="Markdown",
+                    disable_web_page_preview=True,
+                )
+            sent_count += 1
+        except Exception as e:
+            error_str = str(e).lower()
+            if "blocked" in error_str or "chat not found" in error_str or "forbidden" in error_str:
+                deactivate_user(uid)
+                logger.info(f"Deactivated user {uid} — blocked the bot")
+            else:
+                logger.error(f"Failed to send digest to {uid}: {e}")
+            failed_count += 1
+
+    logger.info(f"Daily digest sent — {new_count} new jobs — {sent_count} users reached — {failed_count} failed.")
+    return {"ok": True, "new_jobs": new_count, "sent": sent_count, "failed": failed_count}
