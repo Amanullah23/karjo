@@ -8,12 +8,21 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL         = os.getenv("SUPABASE_URL")
+SUPABASE_KEY         = os.getenv("SUPABASE_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", SUPABASE_KEY)
 
 HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal",
+}
+
+# Service role headers — bypasses RLS, used only for bot user management
+SERVICE_HEADERS = {
+    "apikey": SUPABASE_SERVICE_KEY,
+    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
     "Content-Type": "application/json",
     "Prefer": "return=minimal",
 }
@@ -40,7 +49,7 @@ def get_user_language(telegram_id: int) -> str:
     try:
         res = requests.get(
             f"{BASE}/profiles",
-            headers=HEADERS,
+            headers=SERVICE_HEADERS,
             params={
                 "telegram_id": f"eq.{telegram_id}",
                 "select": "language",
@@ -61,7 +70,7 @@ def save_user_language(telegram_id: int, username: str | None, language: str):
         # Check if user exists first
         res = requests.get(
             f"{BASE}/profiles",
-            headers=HEADERS,
+            headers=SERVICE_HEADERS,
             params={"telegram_id": f"eq.{telegram_id}", "select": "id", "limit": 1},
         )
         rows = _safe_list(res, "save_user_language check")
@@ -70,7 +79,7 @@ def save_user_language(telegram_id: int, username: str | None, language: str):
             # User exists — just update language
             patch_res = requests.patch(
                 f"{BASE}/profiles",
-                headers={**HEADERS, "Prefer": "return=representation"},
+                headers={**SERVICE_HEADERS, "Prefer": "return=representation"},
                 params={"telegram_id": f"eq.{telegram_id}"},
                 json={"language": language},
             )
@@ -80,7 +89,7 @@ def save_user_language(telegram_id: int, username: str | None, language: str):
             import uuid
             post_res = requests.post(
                 f"{BASE}/profiles",
-                headers={**HEADERS, "Prefer": "return=representation"},
+                headers={**SERVICE_HEADERS, "Prefer": "return=representation"},
                 json={
                     "id": str(uuid.uuid4()),
                     "telegram_id": telegram_id,
