@@ -5,18 +5,20 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Eye, EyeOff, Briefcase, Building2 } from "lucide-react";
 import { useAuth, UserRole } from "@/lib/auth-context";
+import { useLang } from "@/lib/language-context";
 
 export default function SignupPage() {
   const { signUp, signInWithGoogle } = useAuth();
+  const { t } = useLang();
 
-  const [role, setRole] = useState<UserRole>("job_seeker");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [role,         setRole]         = useState<UserRole>("job_seeker");
+  const [fullName,     setFullName]     = useState("");
+  const [email,        setEmail]        = useState("");
+  const [password,     setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
+  const [loading,      setLoading]      = useState(false);
+  const [success,      setSuccess]      = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,23 +26,20 @@ export default function SignupPage() {
     setLoading(true);
     const { error } = await signUp(email, password, fullName, role);
     setLoading(false);
-    if (error) {
-      setError(error);
-    } else {
-      setSuccess(true);
-    }
+    if (error) setError(error);
+    else setSuccess(true);
   }
 
   if (success) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center px-6 pt-24 pb-16">
         <div className="w-full max-w-md bg-white border border-warm-gray rounded-2xl p-8 text-center">
-          <h1 className="font-display text-2xl font-bold text-navy mb-2">Check your email</h1>
+          <h1 className="font-display text-2xl font-bold text-navy mb-2">{t("signup.check_email")}</h1>
           <p className="text-warm-muted text-sm">
-            We sent a confirmation link to <span className="text-charcoal font-medium">{email}</span>. Click it to activate your account, then log in.
+            {t("signup.email_sent")} <span className="text-charcoal font-medium">{email}</span>. {t("signup.email_note")}
           </p>
           <Link href="/login" className="inline-block mt-6 text-emerald font-semibold hover:underline text-sm">
-            Back to login
+            {t("signup.back_login")}
           </Link>
         </div>
       </div>
@@ -55,9 +54,10 @@ export default function SignupPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md bg-white border border-warm-gray rounded-2xl p-8"
       >
-        <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">Get started</p>
-        <h1 className="font-display text-3xl font-bold text-navy mb-6">Create your account</h1>
+        <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">{t("signup.get_started")}</p>
+        <h1 className="font-display text-3xl font-bold text-navy mb-6">{t("signup.title")}</h1>
 
+        {/* Role selector */}
         <div className="grid grid-cols-2 gap-2 mb-5">
           <button
             type="button"
@@ -66,7 +66,7 @@ export default function SignupPage() {
               role === "job_seeker" ? "bg-navy text-white border-navy" : "bg-white text-charcoal border-warm-gray hover:border-navy"
             }`}
           >
-            <Briefcase size={15} /> Job Seeker
+            <Briefcase size={15} /> {t("signup.job_seeker")}
           </button>
           <button
             type="button"
@@ -75,10 +75,11 @@ export default function SignupPage() {
               role === "employer" ? "bg-navy text-white border-navy" : "bg-white text-charcoal border-warm-gray hover:border-navy"
             }`}
           >
-            <Building2 size={15} /> Employer
+            <Building2 size={15} /> {t("signup.employer")}
           </button>
         </div>
 
+        {/* Google */}
         <button
           type="button"
           onClick={() => signInWithGoogle()}
@@ -90,56 +91,56 @@ export default function SignupPage() {
             <path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/>
             <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
           </svg>
-          Continue with Google
+          {t("signup.google")}
         </button>
-        <p className="text-[11px] text-warm-muted text-center -mt-2 mb-4">Google sign-up always creates a Job Seeker account</p>
+        <p className="text-[11px] text-warm-muted text-center -mt-2 mb-4">{t("signup.google_note")}</p>
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-warm-gray" />
-          <span className="text-xs text-warm-muted">or</span>
+          <span className="text-xs text-warm-muted">{t("signup.or")}</span>
           <div className="flex-1 h-px bg-warm-gray" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
-            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
+            <User size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full name"
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
+              placeholder={t("signup.name_ph")}
+              className="w-full ps-10 pe-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
             />
           </div>
 
           <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
+            <Mail size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
+              placeholder={t("signup.email_ph")}
+              className="w-full ps-10 pe-4 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
             />
           </div>
 
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
+            <Lock size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted" />
             <input
               type={showPassword ? "text" : "password"}
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (min. 6 characters)"
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
+              placeholder={t("signup.password_ph")}
+              className="w-full ps-10 pe-10 py-2.5 text-sm border border-warm-gray rounded-xl focus:outline-none focus:border-navy text-charcoal placeholder:text-warm-muted"
             />
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
+              className="absolute end-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -152,14 +153,16 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full bg-navy text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-navy/90 transition-all disabled:opacity-60"
           >
-            {loading ? "Creating account..." : `Sign up as ${role === "employer" ? "Employer" : "Job Seeker"}`}
+            {loading
+              ? t("signup.creating")
+              : role === "employer" ? t("signup.as_employer") : t("signup.as_seeker")}
           </button>
         </form>
 
         <p className="text-sm text-warm-muted text-center mt-6">
-          Already have an account?{" "}
+          {t("signup.have_account")}{" "}
           <Link href="/login" className="text-emerald font-semibold hover:underline">
-            Log in
+            {t("signup.login")}
           </Link>
         </p>
       </motion.div>
