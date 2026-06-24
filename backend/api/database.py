@@ -80,7 +80,39 @@ def save_user_language(telegram_id: int, username: str | None, language: str):
     except Exception as e:
         logger.error(f"[DB] save_user_language error: {e}")
 
+# ── Bot Users ─────────────────────────────────────────────────────────────────
 
+def get_all_active_users() -> list[dict]:
+    """Return all active bot users with their language preference."""
+    try:
+        res = requests.get(
+            f"{BASE}/bot_users",
+            headers=HEADERS,
+            params={
+                "is_active": "eq.true",
+                "select": "telegram_id,language",
+            },
+        )
+        return _safe_list(res, "get_all_active_users")
+    except Exception as e:
+        logger.error(f"[DB] get_all_active_users error: {e}")
+        return []
+
+
+def deactivate_user(telegram_id: int):
+    """Mark user as inactive (they blocked the bot)."""
+    try:
+        requests.patch(
+            f"{BASE}/bot_users",
+            headers=HEADERS,
+            params={"telegram_id": f"eq.{telegram_id}"},
+            json={"is_active": False},
+        )
+        logger.info(f"[DB] Deactivated user {telegram_id}")
+    except Exception as e:
+        logger.error(f"[DB] deactivate_user error: {e}")
+
+        
 # ── Jobs ───────────────────────────────────────────────────────────────────────
 
 def save_jobs(jobs: list[dict]) -> int:
