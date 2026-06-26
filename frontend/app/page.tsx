@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import {
-  Briefcase, Zap, Bell, Filter, ArrowRight, TrendingUp,
-  ExternalLink, ChevronDown, Sparkles, Clock, Shield
+  Briefcase,
+  Zap,
+  Bell,
+  Filter,
+  ArrowRight,
+  TrendingUp,
+  ExternalLink,
+  ChevronDown,
+  Sparkles,
+  Clock,
+  Shield,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Job } from "@/types";
@@ -14,7 +23,7 @@ import { useLang } from "@/lib/language-context";
 
 // ── Animated counter ───────────────────────────────────────────────────────────
 function Counter({ to, duration = 2 }: { to: number; duration?: number }) {
-  const [count,   setCount]   = useState(0);
+  const [count, setCount] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,8 +32,10 @@ function Counter({ to, duration = 2 }: { to: number; duration?: number }) {
     const step = to / (duration * 60);
     const timer = setInterval(() => {
       start += step;
-      if (start >= to) { setCount(to); clearInterval(timer); }
-      else setCount(Math.floor(start));
+      if (start >= to) {
+        setCount(to);
+        clearInterval(timer);
+      } else setCount(Math.floor(start));
     }, 1000 / 60);
     return () => clearInterval(timer);
   }, [to, duration]);
@@ -50,29 +61,63 @@ function ParticleField() {
       <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />
       <motion.div
         className="absolute -top-32 -right-32 w-175 h-175 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(5,150,105,0.18) 0%, transparent 65%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(5,150,105,0.18) 0%, transparent 65%)",
+        }}
         animate={{ scale: [1, 1.12, 1], rotate: [0, 8, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute -bottom-48 -left-32 w-150 h-150 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(27,46,75,0.5) 0%, transparent 70%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(27,46,75,0.5) 0%, transparent 70%)",
+        }}
         animate={{ scale: [1, 1.18, 1] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 3,
+        }}
       />
       <motion.div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-900 h-400 rounded-full"
-        style={{ background: "radial-gradient(ellipse, rgba(5,150,105,0.07) 0%, transparent 60%)" }}
+        style={{
+          background:
+            "radial-gradient(ellipse, rgba(5,150,105,0.07) 0%, transparent 60%)",
+        }}
         animate={{ scale: [1, 1.08, 1], rotate: [0, -5, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1,
+        }}
       />
       {particles.map((p) => (
         <motion.div
           key={p.id}
           className="absolute rounded-full bg-emerald"
-          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, opacity: p.opacity }}
-          animate={{ y: [0, -40, 0], opacity: [p.opacity, p.opacity * 2.5, p.opacity], scale: [1, 1.5, 1] }}
-          transition={{ duration: p.duration, repeat: Infinity, ease: "easeInOut", delay: p.delay }}
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            opacity: p.opacity,
+          }}
+          animate={{
+            y: [0, -40, 0],
+            opacity: [p.opacity, p.opacity * 2.5, p.opacity],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: p.delay,
+          }}
         />
       ))}
       <div
@@ -84,7 +129,10 @@ function ParticleField() {
       />
       <motion.div
         className="absolute top-1/2 left-0 right-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(5,150,105,0.3), transparent)" }}
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(5,150,105,0.3), transparent)",
+        }}
         animate={{ opacity: [0.3, 0.7, 0.3], scaleX: [0.8, 1, 0.8] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -93,14 +141,23 @@ function ParticleField() {
 }
 
 // ── Floating job preview card ──────────────────────────────────────────────────
-function FloatingCard({ job, delay, x, y, rotate }: {
+function FloatingCard({
+  job,
+  delay,
+  x,
+  y,
+  rotate,
+}: {
   job: { title: string; company: string; source: string };
-  delay: number; x: number; y: number; rotate: number;
+  delay: number;
+  x: number;
+  y: number;
+  rotate: number;
 }) {
   const sourceColor: Record<string, string> = {
-    "jobs.af":   "bg-blue-500",
+    "jobs.af": "bg-blue-500",
     "acbar.org": "bg-purple-500",
-    "LinkedIn":  "bg-sky-500",
+    LinkedIn: "bg-sky-500",
   };
   return (
     <motion.div
@@ -110,76 +167,148 @@ function FloatingCard({ job, delay, x, y, rotate }: {
       animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
       transition={{
         opacity: { delay, duration: 0.6 },
-        scale:   { delay, duration: 0.6 },
-        y: { duration: 4 + delay, repeat: Infinity, ease: "easeInOut", delay: delay + 0.6 },
+        scale: { delay, duration: 0.6 },
+        y: {
+          duration: 4 + delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: delay + 0.6,
+        },
       }}
     >
       <div className="flex items-center gap-2 mb-1.5">
-        <span className={`w-5 h-5 ${sourceColor[job.source] || "bg-gray-500"} rounded-md text-white text-[9px] font-bold flex items-center justify-center shrink-0`}>
+        <span
+          className={`w-5 h-5 ${sourceColor[job.source] || "bg-gray-500"} rounded-md text-white text-[9px] font-bold flex items-center justify-center shrink-0`}
+        >
           {job.source === "LinkedIn" ? "in" : job.source[0].toUpperCase()}
         </span>
         <span className="text-white/60 text-[10px]">{job.source}</span>
       </div>
-      <p className="text-white text-xs font-semibold leading-snug truncate">{job.title}</p>
+      <p className="text-white text-xs font-semibold leading-snug truncate">
+        {job.title}
+      </p>
       <p className="text-white/50 text-[10px] mt-0.5 truncate">{job.company}</p>
     </motion.div>
   );
 }
 
 const floatingJobs = [
-  { title: "Senior Developer",  company: "Afghan Telecom",     source: "jobs.af",   x: 2,  y: 18, rotate: -6, delay: 0.4 },
-  { title: "Project Manager",   company: "UNDP Afghanistan",   source: "acbar.org", x: 72, y: 12, rotate: 5,  delay: 0.7 },
-  { title: "Data Analyst",      company: "Ministry of Finance", source: "LinkedIn", x: 68, y: 65, rotate: -4, delay: 1.0 },
+  {
+    title: "Senior Developer",
+    company: "Afghan Telecom",
+    source: "jobs.af",
+    x: 2,
+    y: 18,
+    rotate: -6,
+    delay: 0.4,
+  },
+  {
+    title: "Project Manager",
+    company: "UNDP Afghanistan",
+    source: "acbar.org",
+    x: 72,
+    y: 12,
+    rotate: 5,
+    delay: 0.7,
+  },
+  {
+    title: "Data Analyst",
+    company: "Ministry of Finance",
+    source: "LinkedIn",
+    x: 68,
+    y: 65,
+    rotate: -4,
+    delay: 1.0,
+  },
 ];
 
 export default function HomePage() {
   const { t } = useLang();
-  const [saved,    setSaved]    = useState<string[]>([]);
-  const [applied,  setApplied]  = useState<string[]>([]);
-  const [mounted,  setMounted]  = useState(false);
+  const [saved, setSaved] = useState<string[]>([]);
+  const [applied, setApplied] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
   const [featured, setFeatured] = useState<Job[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const rawY   = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const rawY = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const rawOpa = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
-  const heroY   = useSpring(rawY,   { stiffness: 60, damping: 20 });
+  const heroY = useSpring(rawY, { stiffness: 60, damping: 20 });
   const heroOpa = useSpring(rawOpa, { stiffness: 60, damping: 20 });
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     async function fetchFeatured() {
-      const { data } = await supabase.from("jobs").select("*").order("created_at", { ascending: false }).limit(6);
+      const { data } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(6);
       setFeatured(data ?? []);
-      const { count } = await supabase.from("jobs").select("*", { count: "exact", head: true });
+      const { count } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true });
       setTotalCount(count ?? 0);
     }
     fetchFeatured();
   }, []);
 
-  const toggleSave  = (id: string) => setSaved((p)  => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
-  const toggleApply = (id: string) => setApplied((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  const toggleSave = (id: string) =>
+    setSaved((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggleApply = (id: string) =>
+    setApplied((p) =>
+      p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+    );
 
   const features = [
-    { icon: <Zap size={20} />,       title: t("feat1.title"), desc: t("feat1.desc"), iconBg: "bg-blue-600" },
-    { icon: <Bell size={20} />,      title: t("feat2.title"), desc: t("feat2.desc"), iconBg: "bg-emerald" },
-    { icon: <Filter size={20} />,    title: t("feat3.title"), desc: t("feat3.desc"), iconBg: "bg-purple-600" },
-    { icon: <TrendingUp size={20} />,title: t("feat4.title"), desc: t("feat4.desc"), iconBg: "bg-amber-500" },
+    {
+      icon: <Zap size={20} />,
+      title: t("feat1.title"),
+      desc: t("feat1.desc"),
+      iconBg: "bg-blue-600",
+    },
+    {
+      icon: <Bell size={20} />,
+      title: t("feat2.title"),
+      desc: t("feat2.desc"),
+      iconBg: "bg-emerald",
+    },
+    {
+      icon: <Filter size={20} />,
+      title: t("feat3.title"),
+      desc: t("feat3.desc"),
+      iconBg: "bg-purple-600",
+    },
+    {
+      icon: <TrendingUp size={20} />,
+      title: t("feat4.title"),
+      desc: t("feat4.desc"),
+      iconBg: "bg-amber-500",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
-
       {/* ══ HERO ══ */}
-      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
+      >
         {mounted && <ParticleField />}
-        {!mounted && <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />}
+        {!mounted && (
+          <div className="absolute inset-0 bg-linear-to-br from-[#0d1f35] via-navy to-[#0a2a1f]" />
+        )}
 
         {mounted && (
           <div className="hidden lg:block absolute inset-0 pointer-events-none z-10">
-            {floatingJobs.map((j) => <FloatingCard key={j.title} job={j} {...j} />)}
+            {floatingJobs.map((j) => (
+              <FloatingCard key={j.title} job={j} {...j} />
+            ))}
           </div>
         )}
 
@@ -205,8 +334,7 @@ export default function HomePage() {
             className="font-display font-bold text-white leading-[1.03] tracking-tight mb-6"
             style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)" }}
           >
-            {t("hero.headline1")}{" "}
-            <br className="hidden sm:block" />
+            {t("hero.headline1")} <br className="hidden sm:block" />
             <span className="relative">
               <span className="text-emerald">{t("hero.headline2")}</span>
               <motion.span
@@ -240,7 +368,10 @@ export default function HomePage() {
             >
               <Briefcase size={16} />
               {t("hero.browse")}
-              <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight
+                size={15}
+                className="group-hover:translate-x-1 transition-transform"
+              />
             </Link>
             <Link
               href="https://t.me/KarJoAfghanistan"
@@ -260,11 +391,17 @@ export default function HomePage() {
             className="flex items-center justify-center gap-6 flex-wrap"
           >
             {[
-              { icon: <Clock size={13} />,    text: t("hero.trust1") },
-              { icon: <Shield size={13} />,   text: t("hero.trust2") },
-              { icon: <Sparkles size={13} />, text: `${totalCount} ${t("hero.trust3")}` },
+              { icon: <Clock size={13} />, text: t("hero.trust1") },
+              { icon: <Shield size={13} />, text: t("hero.trust2") },
+              {
+                icon: <Sparkles size={13} />,
+                text: `${totalCount} ${t("hero.trust3")}`,
+              },
             ].map((item) => (
-              <div key={item.text} className="flex items-center gap-1.5 text-white/40 text-xs">
+              <div
+                key={item.text}
+                className="flex items-center gap-1.5 text-white/40 text-xs"
+              >
                 <span className="text-emerald">{item.icon}</span>
                 {item.text}
               </div>
@@ -279,7 +416,9 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
         >
-          <span className="text-white/30 text-[10px] tracking-widest uppercase">{t("hero.scroll")}</span>
+          <span className="text-white/30 text-[10px] tracking-widest uppercase">
+            {t("hero.scroll")}
+          </span>
           <ChevronDown size={18} className="text-white/30" />
         </motion.div>
       </section>
@@ -288,10 +427,30 @@ export default function HomePage() {
       <section className="bg-white border-y border-warm-gray py-10 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: 500, suffix: "+",  label: t("stats.jobs"),     color: "text-navy" },
-            { value: 3,   suffix: "",   label: t("stats.sources"),  color: "text-navy" },
-            { value: 100, suffix: "%",  label: t("stats.free"),     color: "text-emerald" },
-            { value: 8,   suffix: "AM", label: t("stats.delivery"), color: "text-navy" },
+            {
+              value: 500,
+              suffix: "+",
+              label: t("stats.jobs"),
+              color: "text-navy",
+            },
+            {
+              value: 3,
+              suffix: "",
+              label: t("stats.sources"),
+              color: "text-navy",
+            },
+            {
+              value: 100,
+              suffix: "%",
+              label: t("stats.free"),
+              color: "text-emerald",
+            },
+            {
+              value: 8,
+              suffix: "AM",
+              label: t("stats.delivery"),
+              color: "text-navy",
+            },
           ].map((s, i) => (
             <motion.div
               key={s.label}
@@ -302,9 +461,12 @@ export default function HomePage() {
               className="text-center"
             >
               <p className={`font-display text-4xl font-bold mb-1 ${s.color}`}>
-                <Counter to={s.value} />{s.suffix}
+                <Counter to={s.value} />
+                {s.suffix}
               </p>
-              <p className="text-warm-muted text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+              <p className="text-warm-muted text-xs font-semibold uppercase tracking-wider">
+                {s.label}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -321,18 +483,26 @@ export default function HomePage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
-              <p className="text-xs font-bold tracking-widest uppercase text-emerald">{t("latest.live")}</p>
+              <p className="text-xs font-bold tracking-widest uppercase text-emerald">
+                {t("latest.live")}
+              </p>
             </div>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-navy leading-tight">
               {t("latest.title")}
             </h2>
-            <p className="text-charcoal/50 text-sm mt-2">{t("latest.subtitle")}</p>
+            <p className="text-charcoal/50 text-sm mt-2">
+              {t("latest.subtitle")}
+            </p>
           </div>
           <Link
             href="/jobs"
             className="group hidden sm:flex items-center gap-2 bg-navy text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-navy/90 transition-all hover:-translate-y-0.5"
           >
-            {t("latest.all")} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            {t("latest.all")}{" "}
+            <ArrowRight
+              size={14}
+              className="group-hover:translate-x-1 transition-transform"
+            />
           </Link>
         </motion.div>
 
@@ -366,19 +536,27 @@ export default function HomePage() {
             href="/jobs"
             className="inline-flex items-center gap-2 border-2 border-navy text-navy font-bold px-8 py-3.5 rounded-2xl hover:bg-navy hover:text-white transition-all duration-200"
           >
-            {t("latest.view_all")} {totalCount} {t("latest.jobs")} <ArrowRight size={16} />
+            {t("latest.view_all")} {totalCount} {t("latest.jobs")}{" "}
+            <ArrowRight size={16} />
           </Link>
         </motion.div>
       </section>
 
       {/* ══ FEATURES ══ */}
       <section className="py-24 px-6 bg-navy relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`, backgroundSize: "32px 32px" }}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `radial-gradient(circle, #fff 1px, transparent 1px)`,
+            backgroundSize: "32px 32px",
+          }}
         />
         <motion.div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-1 rounded-full"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(5,150,105,0.6), transparent)" }}
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(5,150,105,0.6), transparent)",
+          }}
         />
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
@@ -387,11 +565,17 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-xs font-bold tracking-widest uppercase text-emerald mb-3">{t("features.label")}</p>
+            <p className="text-xs font-bold tracking-widest uppercase text-emerald mb-3">
+              {t("features.label")}
+            </p>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
-              {t("features.title1")}<br />{t("features.title2")}
+              {t("features.title1")}
+              <br />
+              {t("features.title2")}
             </h2>
-            <p className="text-white/40 max-w-lg mx-auto text-sm leading-relaxed">{t("features.subtitle")}</p>
+            <p className="text-white/40 max-w-lg mx-auto text-sm leading-relaxed">
+              {t("features.subtitle")}
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -404,14 +588,24 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="group relative bg-white/5 hover:bg-white/8 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-300 overflow-hidden"
               >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"
-                  style={{ background: "radial-gradient(circle at 20% 50%, rgba(5,150,105,0.08) 0%, transparent 60%)" }}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 20% 50%, rgba(5,150,105,0.08) 0%, transparent 60%)",
+                  }}
                 />
-                <div className={`relative z-10 w-11 h-11 ${f.iconBg} rounded-xl flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                <div
+                  className={`relative z-10 w-11 h-11 ${f.iconBg} rounded-xl flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform duration-300`}
+                >
                   {f.icon}
                 </div>
-                <h3 className="relative z-10 font-display font-bold text-white text-lg mb-2">{f.title}</h3>
-                <p className="relative z-10 text-white/50 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="relative z-10 font-display font-bold text-white text-lg mb-2">
+                  {f.title}
+                </h3>
+                <p className="relative z-10 text-white/50 text-sm leading-relaxed">
+                  {f.desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -423,7 +617,10 @@ export default function HomePage() {
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-175 h-100 rounded-full"
-            style={{ background: "radial-gradient(ellipse, rgba(5,150,105,0.08) 0%, transparent 65%)" }}
+            style={{
+              background:
+                "radial-gradient(ellipse, rgba(5,150,105,0.08) 0%, transparent 65%)",
+            }}
             animate={{ scale: [1, 1.2, 1], rotate: [0, 3, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -445,7 +642,9 @@ export default function HomePage() {
             </motion.div>
 
             <h2 className="font-display text-4xl md:text-5xl font-bold text-navy mb-4 leading-tight">
-              {t("cta.title1")}<br />{t("cta.title2")}
+              {t("cta.title1")}
+              <br />
+              {t("cta.title2")}
             </h2>
             <p className="text-charcoal/55 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
               {t("cta.subtitle")}
@@ -456,78 +655,31 @@ export default function HomePage() {
               target="_blank"
               className="group inline-flex items-center justify-center gap-3 bg-navy text-white font-bold px-10 py-4 rounded-2xl hover:bg-navy/90 transition-all hover:-translate-y-1 hover:shadow-xl shadow-navy/20 text-base mb-6"
             >
-              <Bell size={20} className="text-emerald group-hover:animate-bounce" />
+              <Bell
+                size={20}
+                className="text-emerald group-hover:animate-bounce"
+              />
               {t("cta.button")}
               <ExternalLink size={15} className="opacity-50" />
             </Link>
 
             <div className="flex items-center justify-center gap-6 flex-wrap">
-              {[t("cta.trust1"), t("cta.trust2"), t("cta.trust3")].map((text) => (
-                <span key={text} className="flex items-center gap-1.5 text-xs text-warm-muted">
-                  <span className="w-1 h-1 bg-emerald rounded-full" />
-                  {text}
-                </span>
-              ))}
+              {[t("cta.trust1"), t("cta.trust2"), t("cta.trust3")].map(
+                (text) => (
+                  <span
+                    key={text}
+                    className="flex items-center gap-1.5 text-xs text-warm-muted"
+                  >
+                    <span className="w-1 h-1 bg-emerald rounded-full" />
+                    {text}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="bg-navy border-t border-white/5 py-12 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
-                <Briefcase size={17} className="text-white" />
-              </div>
-              <div>
-                <span className="font-display font-bold text-white text-lg">Kar<span className="text-emerald">Jo</span></span>
-                <span className="text-white/30 text-xs ml-2">کارجو</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              {[
-                { href: "/jobs",      label: t("nav.jobs") },
-                { href: "/dashboard", label: t("nav.dashboard") },
-                { href: "/saved",     label: t("nav.saved") },
-                { href: "/applied",   label: t("nav.applied") },
-              ].map((l) => (
-                <Link key={l.href} href={l.href} className="text-xs text-white/40 hover:text-white transition-colors font-medium">
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-              {[
-                { href: "https://jobs.af",        label: "jobs.af" },
-                { href: "https://acbar.org/jobs", label: "ACBAR" },
-              ].map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  target="_blank"
-                  className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors border border-white/10 px-3 py-1.5 rounded-lg"
-                >
-                  {l.label} <ExternalLink size={10} />
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-white/25 text-xs">{t("footer.rights")}</p>
-            <p className="text-white/25 text-xs">
-              {t("footer.built")}{" "}
-              <Link href="https://yawari.vercel.app" target="_blank" className="text-white/50 hover:text-emerald transition-colors font-semibold">
-                Amanullah Yawari
-              </Link>
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

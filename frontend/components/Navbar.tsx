@@ -16,6 +16,7 @@ import {
   Building2,
   User,
   Globe,
+  Download,
 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
@@ -194,12 +195,13 @@ export default function Navbar() {
   const { user, profile, loading, signOut } = useAuth();
   const { t, lang }           = useLang();
 
-  const navLinks = [
-    { href: "/jobs",      label: t("nav.jobs"),      icon: <Search size={15} /> },
-    { href: "/dashboard", label: t("nav.dashboard"), icon: <LayoutDashboard size={15} /> },
-    { href: "/saved",     label: t("nav.saved"),     icon: <Bookmark size={15} /> },
-    { href: "/applied",   label: t("nav.applied"),   icon: <CheckCircle2 size={15} /> },
-  ];
+ const navLinks = [
+  { href: "/jobs",      label: t("nav.jobs"),      icon: <Search size={15} /> },
+  { href: "/dashboard", label: t("nav.dashboard"), icon: <LayoutDashboard size={15} /> },
+  { href: "/saved",     label: t("nav.saved"),     icon: <Bookmark size={15} /> },
+  { href: "/applied",   label: t("nav.applied"),   icon: <CheckCircle2 size={15} /> },
+  { href: "/download",  label: t("nav.download"),  icon: <Download size={15} /> },
+];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

@@ -29,6 +29,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.admin":       "Admin",
     "nav.tap_profile": "Tap to view profile",
     "nav.account":     "Account",
+    "nav.download": "Download App",
 
     // Common
     "common.search":   "Search",
@@ -235,6 +236,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.admin":       "مدیر",
     "nav.tap_profile": "برای مشاهده پروفایل کلیک کنید",
     "nav.account":     "حساب",
+    "nav.download": "دانلود اپ",
 
     // Common
     "common.search":   "جستجو",
