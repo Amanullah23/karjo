@@ -204,7 +204,7 @@ export default function ContactPage() {
                   <div className="relative">
                     <User
                       size={16}
-                      className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
+                      className="absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
                     />
                     <input
                       type="text"
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   <div className="relative">
                     <Mail
                       size={16}
-                      className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
+                      className="absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
                     />
                     <input
                       type="email"

@@ -17,12 +17,14 @@ import {
   User,
   Globe,
   Download,
+  GraduationCap,
 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth, Profile } from "@/lib/auth-context";
 import { useLang, Lang } from "@/lib/language-context";
+import { supabase } from "@/lib/supabase";
 
 function roleLabel(role?: Profile["role"], t?: (k: string) => string) {
   const _t = t ?? ((k: string) => k);
@@ -30,6 +32,14 @@ function roleLabel(role?: Profile["role"], t?: (k: string) => string) {
   if (role === "admin") return _t("nav.admin");
   return _t("nav.job_seeker");
 }
+
+type NavChild = { href: string; label: string; icon: React.ReactNode };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  children?: NavChild[];
+};
 
 // ── Language Switcher ─────────────────────────────────────────────────────────
 
@@ -97,6 +107,90 @@ function LangSwitcher() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Desktop dropdown nav item ────────────────────────────────────────────────
+
+function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
+  const [open, setOpen] = useState(false);
+  const active =
+    pathname === item.href ||
+    (item.children?.some((c) => pathname === c.href) ?? false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Link
+        href={item.href}
+        className={`relative flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 ${
+          active
+            ? "text-navy bg-navy/8"
+            : "text-charcoal/70 hover:text-navy hover:bg-navy/5"
+        }`}
+      >
+        <span className={active ? "text-emerald" : "text-warm-muted"}>
+          {item.icon}
+        </span>
+        {item.label}
+        {item.children && (
+          <ChevronDown
+            size={12}
+            className={`text-warm-muted transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+        {active && (
+          <motion.div
+            layoutId="nav-indicator"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald rounded-full"
+          />
+        )}
+      </Link>
+
+      {item.children && (
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+              className="absolute start-0 top-full pt-1 w-48 z-50"
+            >
+              <div className="bg-white border border-warm-gray rounded-2xl shadow-xl overflow-hidden">
+                {item.children.map((c) => {
+                  const childActive = pathname === c.href;
+                  return (
+                    <Link
+                      key={c.href}
+                      href={c.href}
+                      onClick={() => setOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${
+                        childActive
+                          ? "bg-navy/5 text-navy font-semibold"
+                          : "text-charcoal hover:bg-cream"
+                      }`}
+                    >
+                      <span
+                        className={
+                          childActive ? "text-emerald" : "text-warm-muted"
+                        }
+                      >
+                        {c.icon}
+                      </span>
+                      {c.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
@@ -204,18 +298,48 @@ export default function Navbar() {
   const { user, profile, loading, signOut } = useAuth();
   const { t, lang } = useLang();
 
-  const navLinks = [
-    { href: "/jobs", label: t("nav.jobs"), icon: <Search size={15} /> },
+  const [jobCount, setJobCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchCount() {
+      const { count } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true });
+      setJobCount(count ?? 0);
+    }
+    fetchCount();
+  }, []);
+
+  const navLinks: NavItem[] = [
+    {
+      href: "/jobs",
+      label: t("nav.jobs"),
+      icon: <Search size={15} />,
+      children: [
+        {
+          href: "/scholarships",
+          label: t("nav.scholarships"),
+          icon: <GraduationCap size={15} />,
+        },
+        {
+          href: "/companies",
+          label: t("nav.companies"),
+          icon: <Building2 size={15} />,
+        },
+      ],
+    },
     {
       href: "/dashboard",
       label: t("nav.dashboard"),
       icon: <LayoutDashboard size={15} />,
-    },
-    { href: "/saved", label: t("nav.saved"), icon: <Bookmark size={15} /> },
-    {
-      href: "/applied",
-      label: t("nav.applied"),
-      icon: <CheckCircle2 size={15} />,
+      children: [
+        { href: "/saved", label: t("nav.saved"), icon: <Bookmark size={15} /> },
+        {
+          href: "/applied",
+          label: t("nav.applied"),
+          icon: <CheckCircle2 size={15} />,
+        },
+      ],
     },
     {
       href: "/download",
@@ -259,38 +383,16 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((l) => {
-            const active = pathname === l.href;
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`relative flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 ${
-                  active
-                    ? "text-navy bg-navy/8"
-                    : "text-charcoal/70 hover:text-navy hover:bg-navy/5"
-                }`}
-              >
-                <span className={active ? "text-emerald" : "text-warm-muted"}>
-                  {l.icon}
-                </span>
-                {l.label}
-                {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald rounded-full"
-                  />
-                )}
-              </Link>
-            );
-          })}
+          {navLinks.map((l) => (
+            <NavDropdown key={l.href} item={l} pathname={pathname} />
+          ))}
         </div>
 
         <div className="hidden md:flex items-center gap-3">
           <div className="flex items-center gap-2 bg-emerald/8 border border-emerald/20 px-3 py-1.5 rounded-full">
             <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
             <span className="text-xs font-semibold text-emerald">
-              247 {t("nav.live_jobs")}
+              {jobCount ?? "…"} {t("nav.live_jobs")}
             </span>
           </div>
 
@@ -379,22 +481,47 @@ export default function Navbar() {
               {navLinks.map((l) => {
                 const active = pathname === l.href;
                 return (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      active
-                        ? "bg-navy text-white"
-                        : "text-charcoal hover:bg-cream hover:text-navy"
-                    }`}
-                  >
-                    <span
-                      className={active ? "text-emerald" : "text-warm-muted"}
+                  <div key={l.href}>
+                    <Link
+                      href={l.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        active
+                          ? "bg-navy text-white"
+                          : "text-charcoal hover:bg-cream hover:text-navy"
+                      }`}
                     >
-                      {l.icon}
-                    </span>
-                    {l.label}
-                  </Link>
+                      <span
+                        className={active ? "text-emerald" : "text-warm-muted"}
+                      >
+                        {l.icon}
+                      </span>
+                      {l.label}
+                    </Link>
+
+                    {l.children?.map((c) => {
+                      const childActive = pathname === c.href;
+                      return (
+                        <Link
+                          key={c.href}
+                          href={c.href}
+                          className={`flex items-center gap-3 ms-6 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            childActive
+                              ? "bg-navy text-white"
+                              : "text-charcoal/80 hover:bg-cream hover:text-navy"
+                          }`}
+                        >
+                          <span
+                            className={
+                              childActive ? "text-emerald" : "text-warm-muted"
+                            }
+                          >
+                            {c.icon}
+                          </span>
+                          {c.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 );
               })}
 
@@ -433,7 +560,7 @@ export default function Navbar() {
               <div className="flex items-center gap-2 px-4 py-2">
                 <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
                 <span className="text-xs font-semibold text-emerald">
-                  247 {t("nav.live_jobs")}
+                  {jobCount ?? "…"} {t("nav.live_jobs")}
                 </span>
               </div>
 

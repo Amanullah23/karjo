@@ -80,7 +80,7 @@ export default function LoginPage() {
           <div className="relative">
             <Mail
               size={16}
-              className="absolute start-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
+              className="absolute inset-s-3.5 top-1/2 -translate-y-1/2 text-warm-muted"
             />
             <input
               type="email"
@@ -108,7 +108,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute end-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
+              className="absolute inset-e-3.5 top-1/2 -translate-y-1/2 text-warm-muted hover:text-charcoal"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
