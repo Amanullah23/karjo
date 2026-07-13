@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FAF8F5;
+  --color-navy: #1B2E4B;
+  --color-emerald: #059669;
+  --color-emerald-light: #D1FAE5;
+  --color-emerald-dark: #047857;
+  --color-charcoal: #2D3748;
+  --color-warm-gray: #E8E4DF;
+  --color-warm-muted: #9B8E85;
+  --color-card: #FFFFFF;
+
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-charcoal);
+  }
+}
