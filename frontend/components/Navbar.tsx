@@ -27,7 +27,7 @@ import { useLang, Lang } from "@/lib/language-context";
 function roleLabel(role?: Profile["role"], t?: (k: string) => string) {
   const _t = t ?? ((k: string) => k);
   if (role === "employer") return _t("nav.employer");
-  if (role === "admin")    return _t("nav.admin");
+  if (role === "admin") return _t("nav.admin");
   return _t("nav.job_seeker");
 }
 
@@ -49,7 +49,7 @@ function LangSwitcher() {
 
   const options: { value: Lang; label: string; native: string }[] = [
     { value: "en", label: "English", native: "EN" },
-    { value: "fa", label: "دری",     native: "FA" },
+    { value: "fa", label: "دری", native: "FA" },
   ];
 
   const current = options.find((o) => o.value === lang)!;
@@ -62,7 +62,10 @@ function LangSwitcher() {
       >
         <Globe size={14} className="text-warm-muted" />
         <span>{current.native}</span>
-        <ChevronDown size={12} className={`text-warm-muted transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          size={12}
+          className={`text-warm-muted transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       <AnimatePresence>
@@ -72,12 +75,15 @@ function LangSwitcher() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
-            className={`absolute end-0 mt-2 w-36 bg-white border border-warm-gray rounded-2xl shadow-xl overflow-hidden z-50 ${lang === "fa" ? "left-0" : "right-0"}`}
+            className="absolute start-0 mt-2 w-36 bg-white border border-warm-gray rounded-2xl shadow-xl overflow-hidden z-50"
           >
             {options.map((o) => (
               <button
                 key={o.value}
-                onClick={() => { setLang(o.value); setOpen(false); }}
+                onClick={() => {
+                  setLang(o.value);
+                  setOpen(false);
+                }}
                 className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
                   lang === o.value
                     ? "bg-navy/5 text-navy font-semibold"
@@ -174,7 +180,10 @@ function ProfileMenu({
               {t("nav.dashboard")}
             </Link>
             <button
-              onClick={() => { setOpen(false); onSignOut(); }}
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-warm-gray"
             >
               <LogOut size={15} /> {t("nav.logout")}
@@ -189,19 +198,31 @@ function ProfileMenu({
 // ── Navbar ────────────────────────────────────────────────────────────────────
 
 export default function Navbar() {
-  const [open, setOpen]       = useState(false);
+  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const pathname              = usePathname();
+  const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
-  const { t, lang }           = useLang();
+  const { t, lang } = useLang();
 
- const navLinks = [
-  { href: "/jobs",      label: t("nav.jobs"),      icon: <Search size={15} /> },
-  { href: "/dashboard", label: t("nav.dashboard"), icon: <LayoutDashboard size={15} /> },
-  { href: "/saved",     label: t("nav.saved"),     icon: <Bookmark size={15} /> },
-  { href: "/applied",   label: t("nav.applied"),   icon: <CheckCircle2 size={15} /> },
-  { href: "/download",  label: t("nav.download"),  icon: <Download size={15} /> },
-];
+  const navLinks = [
+    { href: "/jobs", label: t("nav.jobs"), icon: <Search size={15} /> },
+    {
+      href: "/dashboard",
+      label: t("nav.dashboard"),
+      icon: <LayoutDashboard size={15} />,
+    },
+    { href: "/saved", label: t("nav.saved"), icon: <Bookmark size={15} /> },
+    {
+      href: "/applied",
+      label: t("nav.applied"),
+      icon: <CheckCircle2 size={15} />,
+    },
+    {
+      href: "/download",
+      label: t("nav.download"),
+      icon: <Download size={15} />,
+    },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -340,7 +361,9 @@ export default function Navbar() {
                   className="flex items-center gap-3 px-4 py-3 mb-2 bg-cream rounded-xl hover:bg-warm-gray/40 transition-colors"
                 >
                   <span className="w-9 h-9 rounded-full bg-navy text-white text-sm font-bold flex items-center justify-center shrink-0">
-                    {(profile?.full_name || user.email || "?").charAt(0).toUpperCase()}
+                    {(profile?.full_name || user.email || "?")
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-navy truncate">
@@ -365,7 +388,9 @@ export default function Navbar() {
                         : "text-charcoal hover:bg-cream hover:text-navy"
                     }`}
                   >
-                    <span className={active ? "text-emerald" : "text-warm-muted"}>
+                    <span
+                      className={active ? "text-emerald" : "text-warm-muted"}
+                    >
                       {l.icon}
                     </span>
                     {l.label}
