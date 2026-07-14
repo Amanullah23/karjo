@@ -18,6 +18,7 @@ import {
   Globe,
   Download,
   GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
@@ -273,6 +274,26 @@ function ProfileMenu({
               <LayoutDashboard size={15} className="text-warm-muted" />
               {t("nav.dashboard")}
             </Link>
+            {profile?.role === "employer" && (
+              <Link
+                href="/dashboard/post-job"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream transition-colors"
+              >
+                <Briefcase size={15} className="text-emerald" />
+                {t("nav.post_job")}
+              </Link>
+            )}
+            {profile?.role === "admin" && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-charcoal hover:bg-cream transition-colors"
+              >
+                <ShieldCheck size={15} className="text-emerald" />
+                {t("nav.admin_panel")}
+              </Link>
+            )}
             <button
               onClick={() => {
                 setOpen(false);
@@ -475,6 +496,29 @@ export default function Navbar() {
                       {roleLabel(profile?.role, t)} · {t("nav.tap_profile")}
                     </p>
                   </div>
+                </Link>
+              )}
+
+              {!loading && user && profile?.role === "employer" && (
+                <Link
+                  href="/dashboard/post-job"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-charcoal hover:bg-cream hover:text-navy transition-all"
+                >
+                  <span className="text-emerald">
+                    <Briefcase size={15} />
+                  </span>
+                  {t("nav.post_job")}
+                </Link>
+              )}
+              {!loading && user && profile?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-charcoal hover:bg-cream hover:text-navy transition-all"
+                >
+                  <span className="text-emerald">
+                    <ShieldCheck size={15} />
+                  </span>
+                  {t("nav.admin_panel")}
                 </Link>
               )}
 

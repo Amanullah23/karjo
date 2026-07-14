@@ -38,6 +38,7 @@ const copy = {
     privacy: "Privacy",
     terms: "Terms",
     guide: "How KarJo works",
+    post_job: "Post a job",
   },
   fa: {
     brand_desc:
@@ -54,6 +55,7 @@ const copy = {
     privacy: "حریم خصوصی",
     terms: "شرایط استفاده",
     guide: "راهنمای کارجو",
+    post_job: "ثبت وظیفه",
   },
 };
 
@@ -64,6 +66,7 @@ export default function Footer() {
   const quickLinks = [
     { label: t.home, href: "/" },
     { label: t.browse_jobs, href: "/jobs" },
+    { label: t.post_job, href: "/dashboard/post-job" },
     { label: t.download_app, href: "/download" },
     { label: t.contact_us, href: "/contact" },
     { label: t.guide, href: "/guide" },

@@ -38,6 +38,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.download": "Download App",
     "nav.scholarships": "Scholarships",
     "nav.companies": "Companies",
+    "nav.post_job": "Post a job",
+    "nav.admin_panel": "Admin panel",
 
     // Common
     "common.search": "Search",
@@ -256,6 +258,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.download": "دانلود اپ",
     "nav.scholarships": "بورسیه‌ها",
     "nav.companies": "شرکت‌ها",
+    "nav.post_job": "ثبت وظیفه",
+    "nav.admin_panel": "پنل مدیریت",
 
     // Common
     "common.search": "جستجو",
