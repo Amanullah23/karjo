@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   Tag,
   Globe,
+  MapPin,
+  FileText,
+  Mail,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useJobActions } from "@/lib/use-job-actions";
@@ -25,28 +28,34 @@ const sourceColors: Record<string, string> = {
   "jobs.af": "bg-blue-50 text-blue-700 border-blue-200",
   "acbar.org": "bg-purple-50 text-purple-700 border-purple-200",
   LinkedIn: "bg-sky-50 text-sky-700 border-sky-200",
+  KarJo: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
 const sourceLabels: Record<string, string> = {
   "jobs.af": "jobs.af",
   "acbar.org": "ACBAR",
   LinkedIn: "LinkedIn",
+  KarJo: "KarJo",
 };
 
 const copy = {
   en: {
     back: "Back to jobs",
-    company: "Company",
     posted: "Posted",
     added: "Added to KarJo",
-    source: "Source",
+    expires: "Deadline",
     skills: "Skills & categories",
+    description: "Job description",
     about_title: "About this job",
     about_desc:
       "This listing was collected automatically from its original source. Full details — description, requirements, and how to apply — are on the original posting.",
     apply_note:
       "Applications are submitted on the source website, not on KarJo.",
+    karjo_note:
+      "This job was posted directly on KarJo by the employer and reviewed by our team.",
     view_original: "View original & apply",
+    apply_now: "Apply now",
+    apply_email: "Apply by email",
     save: "Save",
     saved: "Saved",
     apply: "Mark applied",
@@ -59,16 +68,20 @@ const copy = {
   },
   fa: {
     back: "بازگشت به وظایف",
-    company: "شرکت",
     posted: "تاریخ نشر",
     added: "افزوده شده به کارجو",
-    source: "منبع",
+    expires: "مهلت درخواست",
     skills: "مهارت‌ها و دسته‌بندی‌ها",
+    description: "شرح وظیفه",
     about_title: "درباره این وظیفه",
     about_desc:
       "این آگهی به صورت خودکار از منبع اصلی آن جمع‌آوری شده است. جزئیات کامل — شرح وظایف، شرایط و نحوه درخواست — در آگهی اصلی موجود است.",
     apply_note: "درخواست‌ها در وب‌سایت منبع ثبت می‌شوند، نه در کارجو.",
+    karjo_note:
+      "این وظیفه مستقیماً توسط کارفرما در کارجو ثبت و توسط تیم ما بررسی شده است.",
     view_original: "مشاهده آگهی اصلی و درخواست",
+    apply_now: "همین حالا درخواست دهید",
+    apply_email: "درخواست از طریق ایمیل",
     save: "ذخیره",
     saved: "ذخیره شد",
     apply: "علامت درخواست‌شده",
@@ -144,12 +157,20 @@ export default function JobDetailsPage({
   const sourceColor =
     sourceColors[job.source] || "bg-gray-50 text-gray-700 border-gray-200";
   const sourceLabel = sourceLabels[job.source] || job.source;
+  const isKarJoJob = job.source === "KarJo";
+  const isEmailApply = job.url?.startsWith("mailto:");
   const addedDate = job.created_at
     ? new Date(job.created_at).toLocaleDateString(
         lang === "fa" ? "fa-AF" : "en-US",
         { year: "numeric", month: "short", day: "numeric" },
       )
     : null;
+
+  const applyLabel = isKarJoJob
+    ? isEmailApply
+      ? t.apply_email
+      : t.apply_now
+    : t.view_original;
 
   return (
     <div className="min-h-screen bg-cream px-4 sm:px-6 pt-24 pb-16">
@@ -190,13 +211,25 @@ export default function JobDetailsPage({
                 <Building2 size={14} />
                 {job.company}
               </span>
+              {job.location && (
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={14} />
+                  {job.location}
+                </span>
+              )}
               {job.date && (
                 <span className="flex items-center gap-1.5">
                   <Calendar size={14} />
                   {t.posted}: {job.date}
                 </span>
               )}
-              {addedDate && (
+              {job.expire_date && (
+                <span className="flex items-center gap-1.5 text-amber-700">
+                  <Clock size={14} />
+                  {t.expires}: {job.expire_date}
+                </span>
+              )}
+              {!isKarJoJob && addedDate && (
                 <span className="flex items-center gap-1.5">
                   <Clock size={14} />
                   {t.added}: {addedDate}
@@ -227,28 +260,47 @@ export default function JobDetailsPage({
               </section>
             )}
 
-            {/* About */}
-            <section>
-              <h2 className="flex items-center gap-2 font-display font-bold text-navy text-sm mb-3">
-                <Globe size={14} className="text-emerald" />
-                {t.about_title}
-              </h2>
-              <p className="text-sm text-charcoal/70 leading-relaxed mb-2">
-                {t.about_desc}
-              </p>
-              <p className="text-xs text-warm-muted">{t.apply_note}</p>
-            </section>
+            {/* Description (employer jobs) or aggregator note (scraped jobs) */}
+            {job.description ? (
+              <section>
+                <h2 className="flex items-center gap-2 font-display font-bold text-navy text-sm mb-3">
+                  <FileText size={14} className="text-emerald" />
+                  {t.description}
+                </h2>
+                <p className="text-sm text-charcoal/80 leading-relaxed whitespace-pre-line">
+                  {job.description}
+                </p>
+                {isKarJoJob && (
+                  <p className="text-xs text-warm-muted mt-4">{t.karjo_note}</p>
+                )}
+              </section>
+            ) : (
+              <section>
+                <h2 className="flex items-center gap-2 font-display font-bold text-navy text-sm mb-3">
+                  <Globe size={14} className="text-emerald" />
+                  {t.about_title}
+                </h2>
+                <p className="text-sm text-charcoal/70 leading-relaxed mb-2">
+                  {t.about_desc}
+                </p>
+                <p className="text-xs text-warm-muted">{t.apply_note}</p>
+              </section>
+            )}
 
             {/* Actions */}
             <section className="flex flex-col sm:flex-row gap-3 pt-2">
               <a
                 href={job.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={isEmailApply ? undefined : "_blank"}
+                rel={isEmailApply ? undefined : "noopener noreferrer"}
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-navy text-white text-sm font-semibold px-5 py-3 rounded-xl hover:bg-navy/90 transition-all"
               >
-                {t.view_original}
-                <ExternalLink size={14} className="opacity-70" />
+                {applyLabel}
+                {isEmailApply ? (
+                  <Mail size={14} className="opacity-70" />
+                ) : (
+                  <ExternalLink size={14} className="opacity-70" />
+                )}
               </a>
               <button
                 onClick={() => toggleSave(job.id)}

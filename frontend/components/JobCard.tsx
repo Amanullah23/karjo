@@ -23,12 +23,14 @@ const sourceColors: Record<string, string> = {
   "jobs.af": "bg-blue-50 text-blue-700 border-blue-200",
   "acbar.org": "bg-purple-50 text-purple-700 border-purple-200",
   LinkedIn: "bg-sky-50 text-sky-700 border-sky-200",
+  KarJo: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
 const sourceLabels: Record<string, string> = {
   "jobs.af": "jobs.af",
   "acbar.org": "ACBAR",
   LinkedIn: "LinkedIn",
+  KarJo: "KarJo",
 };
 
 export default function JobCard({

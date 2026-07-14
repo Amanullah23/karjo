@@ -2,23 +2,40 @@
 
 import { motion } from "framer-motion";
 import {
-  Briefcase, Bookmark, CheckCircle2, TrendingUp, Bell, RefreshCw, ExternalLink,
+  Briefcase,
+  Bookmark,
+  CheckCircle2,
+  TrendingUp,
+  Bell,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { mockJobs } from "@/data/mockJobs";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useLang } from "@/lib/language-context";
+import { useAuth } from "@/lib/auth-context";
+import EmployerDashboard from "@/components/EmployerDashboard";
 
 const sourceStats = [
-  { source: "jobs.af",  count: 124, color: "bg-blue-500",   pct: 50 },
-  { source: "ACBAR",    count: 78,  color: "bg-purple-500", pct: 32 },
-  { source: "LinkedIn", count: 45,  color: "bg-sky-500",    pct: 18 },
+  { source: "jobs.af", count: 124, color: "bg-blue-500", pct: 50 },
+  { source: "ACBAR", count: 78, color: "bg-purple-500", pct: 32 },
+  { source: "LinkedIn", count: 45, color: "bg-sky-500", pct: 18 },
 ];
 
 const recentJobs = mockJobs.slice(0, 5);
 
 export default function DashboardPage() {
   const { t } = useLang();
+  const { profile } = useAuth();
+
+  if (profile?.role === "employer") {
+    return (
+      <ProtectedRoute>
+        <EmployerDashboard />
+      </ProtectedRoute>
+    );
+  }
 
   const stats = [
     {
@@ -52,25 +69,26 @@ export default function DashboardPage() {
   ];
 
   const quickLinks = [
-    { label: t("dash.browse_all"),   href: "/jobs" },
-    { label: t("dash.saved_link"),   href: "/saved" },
+    { label: t("dash.browse_all"), href: "/jobs" },
+    { label: t("dash.saved_link"), href: "/saved" },
     { label: t("dash.applied_link"), href: "/applied" },
-    { label: "jobs.af",              href: "https://jobs.af",          external: true },
-    { label: "ACBAR Jobs",           href: "https://acbar.org/en/jobs", external: true },
+    { label: "jobs.af", href: "https://jobs.af", external: true },
+    { label: "ACBAR Jobs", href: "https://acbar.org/en/jobs", external: true },
   ];
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-cream pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-6">
-
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-emerald mb-1">
                 {t("dash.overview")}
               </p>
-              <h1 className="font-display text-4xl font-bold text-navy">{t("dash.title")}</h1>
+              <h1 className="font-display text-4xl font-bold text-navy">
+                {t("dash.title")}
+              </h1>
             </div>
             <div className="flex gap-2 sm:gap-3">
               <Link
@@ -99,23 +117,33 @@ export default function DashboardPage() {
                 className={`bg-white border rounded-2xl p-5 ${s.color}`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-white rounded-xl shadow-sm">{s.icon}</div>
+                  <div className="p-2 bg-white rounded-xl shadow-sm">
+                    {s.icon}
+                  </div>
                 </div>
-                <p className="font-display text-3xl font-bold text-navy mb-1">{s.value}</p>
+                <p className="font-display text-3xl font-bold text-navy mb-1">
+                  {s.value}
+                </p>
                 <p className="text-xs text-warm-muted font-medium">{s.label}</p>
-                <p className="text-xs text-emerald font-semibold mt-1">{s.change}</p>
+                <p className="text-xs text-emerald font-semibold mt-1">
+                  {s.change}
+                </p>
               </motion.div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
             {/* Recent jobs */}
             <div className="lg:col-span-2">
               <div className="bg-white border border-warm-gray rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-display font-bold text-navy text-lg">{t("dash.recent_jobs")}</h2>
-                  <Link href="/jobs" className="text-sm text-emerald font-semibold hover:underline">
+                  <h2 className="font-display font-bold text-navy text-lg">
+                    {t("dash.recent_jobs")}
+                  </h2>
+                  <Link
+                    href="/jobs"
+                    className="text-sm text-emerald font-semibold hover:underline"
+                  >
                     {t("dash.view_all")}
                   </Link>
                 </div>
@@ -129,8 +157,12 @@ export default function DashboardPage() {
                       className="flex items-center justify-between p-4 bg-cream rounded-xl border border-warm-gray"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-navy text-sm truncate">{job.title}</p>
-                        <p className="text-xs text-warm-muted mt-0.5">{job.company} · {job.source}</p>
+                        <p className="font-semibold text-navy text-sm truncate">
+                          {job.title}
+                        </p>
+                        <p className="text-xs text-warm-muted mt-0.5">
+                          {job.company} · {job.source}
+                        </p>
                       </div>
                       <Link
                         href={job.url}
@@ -147,19 +179,27 @@ export default function DashboardPage() {
 
             {/* Right column */}
             <div className="space-y-5">
-
               {/* Source breakdown */}
               <div className="bg-white border border-warm-gray rounded-2xl p-6">
-                <h2 className="font-display font-bold text-navy text-lg mb-5">{t("dash.by_source")}</h2>
+                <h2 className="font-display font-bold text-navy text-lg mb-5">
+                  {t("dash.by_source")}
+                </h2>
                 <div className="space-y-4">
                   {sourceStats.map((s) => (
                     <div key={s.source}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium text-charcoal">{s.source}</span>
-                        <span className="text-sm font-bold text-navy">{s.count}</span>
+                        <span className="text-sm font-medium text-charcoal">
+                          {s.source}
+                        </span>
+                        <span className="text-sm font-bold text-navy">
+                          {s.count}
+                        </span>
                       </div>
                       <div className="h-2 bg-warm-gray rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.pct}%` }} />
+                        <div
+                          className={`h-full rounded-full ${s.color}`}
+                          style={{ width: `${s.pct}%` }}
+                        />
                       </div>
                     </div>
                   ))}
@@ -169,8 +209,12 @@ export default function DashboardPage() {
               {/* Telegram bot card */}
               <div className="bg-navy rounded-2xl p-6 text-white">
                 <Bell size={22} className="text-emerald mb-3" />
-                <h3 className="font-display font-bold text-lg mb-2">{t("dash.alerts_title")}</h3>
-                <p className="text-white/60 text-sm leading-relaxed mb-4">{t("dash.alerts_desc")}</p>
+                <h3 className="font-display font-bold text-lg mb-2">
+                  {t("dash.alerts_title")}
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed mb-4">
+                  {t("dash.alerts_desc")}
+                </p>
                 <Link
                   href="https://t.me/Kar_Jo_Bot"
                   target="_blank"
@@ -182,7 +226,9 @@ export default function DashboardPage() {
 
               {/* Quick links */}
               <div className="bg-white border border-warm-gray rounded-2xl p-6">
-                <h2 className="font-display font-bold text-navy text-lg mb-4">{t("dash.quick_links")}</h2>
+                <h2 className="font-display font-bold text-navy text-lg mb-4">
+                  {t("dash.quick_links")}
+                </h2>
                 <div className="space-y-2">
                   {quickLinks.map((l) => (
                     <Link
@@ -191,8 +237,13 @@ export default function DashboardPage() {
                       target={l.external ? "_blank" : undefined}
                       className="flex items-center justify-between p-3 rounded-xl hover:bg-cream transition-colors group"
                     >
-                      <span className="text-sm font-medium text-charcoal group-hover:text-navy">{l.label}</span>
-                      <ExternalLink size={13} className="text-warm-muted group-hover:text-navy" />
+                      <span className="text-sm font-medium text-charcoal group-hover:text-navy">
+                        {l.label}
+                      </span>
+                      <ExternalLink
+                        size={13}
+                        className="text-warm-muted group-hover:text-navy"
+                      />
                     </Link>
                   ))}
                 </div>

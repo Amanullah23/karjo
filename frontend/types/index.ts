@@ -9,6 +9,11 @@ export interface Job {
   created_at: string;
   saved?: boolean;
   applied?: boolean;
+  posted_by?: string | null;
+  description?: string | null;
+  location?: string | null;
+  expire_date?: string | null;
+  status?: "pending" | "approved" | string;
 }
 
 export type JobCategory =
