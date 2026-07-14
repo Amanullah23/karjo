@@ -2,18 +2,105 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useLang } from "@/lib/language-context";
 
 type Platform = "android" | "ios";
 
-const APK_VERSIONS = [
-  {
-    label: "Latest version",
-    size: "51.9 MB",
-    file: "/downloads/karjo-latest.apk",
+const copy = {
+  en: {
+    back: "Back to site",
+    free: "Free to download",
+    hero_title: "Get KarJo on your device",
+    hero_sub:
+      "Afghanistan's job platform — find work, apply fast, and track your applications.",
+    android: "Android",
+    iphone: "iPhone",
+    android_title: "KarJo on Android",
+    android_sub: "Install from Google Play or download the APK directly.",
+    get_it_on: "Get it on",
+    google_play: "Google Play",
+    play_soon: "Coming soon on Google Play",
+    download_apk: "Download APK",
+    latest_version: "Latest version",
+    apk_note:
+      "If Google Play is not available in your region, use the direct APK download.",
+    stat_jobs: "Jobs listed",
+    stat_companies: "Companies",
+    stat_rating: "App rating",
+    ios_title: "KarJo on iPhone",
+    ios_sub:
+      "We're building the iOS app. Drop your email and you'll be the first to know when it launches.",
+    coming_soon: "Coming soon",
+    email_ph: "your@email.com",
+    notify: "Notify me",
+    notify_done: "You're on the list — we'll email you when iOS launches.",
+    brand_desc:
+      "Afghanistan's job platform — connecting talent with opportunity across the country.",
+    quick_links: "Quick links",
+    link_home: "Home",
+    link_jobs: "Browse jobs",
+    link_download: "Download app",
+    link_contact: "Contact us",
+    get_app: "Get the app",
+    get_app_desc: "Available on Android. iOS coming soon.",
+    rights: "All rights reserved.",
+    privacy: "Privacy",
+    terms: "Terms",
   },
-];
+  fa: {
+    back: "بازگشت به سایت",
+    free: "دانلود رایگان",
+    hero_title: "کارجو را روی دستگاه خود داشته باشید",
+    hero_sub:
+      "پلتفرم کاریابی افغانستان — کار پیدا کنید، سریع درخواست دهید و درخواست‌هایتان را پیگیری کنید.",
+    android: "اندروید",
+    iphone: "آیفون",
+    android_title: "کارجو در اندروید",
+    android_sub: "از گوگل پلی نصب کنید یا فایل APK را مستقیم دانلود کنید.",
+    get_it_on: "دریافت از",
+    google_play: "Google Play",
+    play_soon: "به زودی در گوگل پلی",
+    download_apk: "دانلود APK",
+    latest_version: "آخرین نسخه",
+    apk_note:
+      "اگر گوگل پلی در منطقه شما در دسترس نیست، از دانلود مستقیم APK استفاده کنید.",
+    stat_jobs: "وظایف ثبت‌شده",
+    stat_companies: "شرکت‌ها",
+    stat_rating: "امتیاز اپ",
+    ios_title: "کارجو در آیفون",
+    ios_sub:
+      "نسخه iOS در حال ساخت است. ایمیل خود را بگذارید تا اولین نفری باشید که از عرضه آن باخبر می‌شود.",
+    coming_soon: "به زودی",
+    email_ph: "ایمیل شما",
+    notify: "خبرم کن",
+    notify_done: "در لیست هستید — با عرضه نسخه iOS برایتان ایمیل می‌فرستیم.",
+    brand_desc:
+      "پلتفرم کاریابی افغانستان — پیوند استعدادها با فرصت‌ها در سراسر کشور.",
+    quick_links: "لینک‌های سریع",
+    link_home: "صفحه اصلی",
+    link_jobs: "جستجوی وظایف",
+    link_download: "دانلود اپلیکیشن",
+    link_contact: "تماس با ما",
+    get_app: "دریافت اپلیکیشن",
+    get_app_desc: "برای اندروید موجود است. نسخه iOS به زودی.",
+    rights: "تمام حقوق محفوظ است.",
+    privacy: "حریم خصوصی",
+    terms: "شرایط استفاده",
+  },
+};
 
 export default function DownloadPage() {
+  const { lang } = useLang();
+  const t = copy[lang === "fa" ? "fa" : "en"];
+
+  const APK_VERSIONS = [
+    {
+      label: t.latest_version,
+      size: "51.9 MB",
+      file: "/downloads/karjo-latest.apk",
+    },
+  ];
+
   const [platform, setPlatform] = useState<Platform>("android");
   const [apkOpen, setApkOpen] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState("");
@@ -58,7 +145,7 @@ export default function DownloadPage() {
             href="/"
             className="text-sm text-gray-500 hover:text-[#1B2E4B] transition-colors"
           >
-            Back to site
+            {t.back}
           </Link>
         </div>
       </nav>
@@ -67,14 +154,13 @@ export default function DownloadPage() {
       <section className="pt-16 pb-10 px-6 text-center">
         <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          Free to download
+          {t.free}
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-[#1B2E4B] mb-4 tracking-tight">
-          Get KarJo on your device
+          {t.hero_title}
         </h1>
         <p className="text-base text-emerald-600 max-w-md mx-auto">
-          Afghanistan&apos;s job platform — find work, apply fast, and track
-          your applications.
+          {t.hero_sub}
         </p>
       </section>
 
@@ -99,7 +185,7 @@ export default function DownloadPage() {
               ) : (
                 <AppleIcon active={platform === p} />
               )}
-              {p === "android" ? "Android" : "iPhone"}
+              {p === "android" ? t.android : t.iphone}
             </button>
           ))}
         </div>
@@ -113,28 +199,26 @@ export default function DownloadPage() {
             <div>
               <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-1 rounded-full mb-5">
                 <AndroidIcon active />
-                Android
+                {t.android}
               </div>
               <h2 className="text-2xl font-semibold text-[#1B2E4B] mb-1">
-                KarJo on Android
+                {t.android_title}
               </h2>
-              <p className="text-sm text-gray-400 mb-7">
-                Install from Google Play or download the APK directly.
-              </p>
+              <p className="text-sm text-gray-400 mb-7">{t.android_sub}</p>
 
               <div className="flex flex-wrap items-center gap-3">
                 {/* Google Play button */}
                 <a
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  title="Coming soon on Google Play"
+                  title={t.play_soon}
                   className="flex items-center gap-3 px-5 py-3 rounded-xl border border-gray-200 hover:border-[#1B2E4B] transition-colors bg-white no-underline"
                 >
                   <GooglePlayIcon />
                   <div className="leading-tight">
-                    <p className="text-[10px] text-gray-400">Get it on</p>
+                    <p className="text-[10px] text-gray-400">{t.get_it_on}</p>
                     <p className="text-sm font-semibold text-[#1B2E4B]">
-                      Google Play
+                      {t.google_play}
                     </p>
                   </div>
                 </a>
@@ -150,12 +234,12 @@ export default function DownloadPage() {
                     }`}
                   >
                     <DownloadIcon />
-                    Download APK
+                    {t.download_apk}
                     <ChevronIcon open={apkOpen} />
                   </button>
 
                   {apkOpen && (
-                    <div className="absolute top-[calc(100%+8px)] left-0 bg-white border border-gray-100 rounded-xl shadow-lg min-w-[240px] z-10 overflow-hidden">
+                    <div className="absolute top-[calc(100%+8px)] start-0 bg-white border border-gray-100 rounded-xl shadow-lg min-w-[240px] z-10 overflow-hidden">
                       {APK_VERSIONS.map((v) => (
                         <a
                           key={v.label}
@@ -175,17 +259,14 @@ export default function DownloadPage() {
                 </div>
               </div>
 
-              <p className="text-xs text-gray-400 mt-4">
-                If Google Play is not available in your region, use the direct
-                APK download.
-              </p>
+              <p className="text-xs text-gray-400 mt-4">{t.apk_note}</p>
 
               {/* Stats row */}
               <div className="mt-8 pt-6 border-t border-gray-50 grid grid-cols-3 gap-4">
                 {[
-                  { label: "Jobs listed", value: "500+" },
-                  { label: "Companies", value: "80+" },
-                  { label: "App rating", value: "4.8 ★" },
+                  { label: t.stat_jobs, value: "500+" },
+                  { label: t.stat_companies, value: "80+" },
+                  { label: t.stat_rating, value: "4.8 ★" },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
                     <p className="text-lg font-bold text-[#1B2E4B]">
@@ -205,15 +286,12 @@ export default function DownloadPage() {
                 <AppleIcon active={false} large />
               </div>
               <h2 className="text-xl font-semibold text-[#1B2E4B]">
-                KarJo on iPhone
+                {t.ios_title}
               </h2>
-              <p className="text-sm text-gray-400 max-w-xs">
-                We&apos;re building the iOS app. Drop your email and you&apos;ll
-                be the first to know when it launches.
-              </p>
+              <p className="text-sm text-gray-400 max-w-xs">{t.ios_sub}</p>
               <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs px-3 py-1 rounded-full">
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
-                Coming soon
+                {t.coming_soon}
               </span>
 
               {!notifySent ? (
@@ -226,20 +304,19 @@ export default function DownloadPage() {
                     required
                     value={notifyEmail}
                     onChange={(e) => setNotifyEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder={t.email_ph}
                     className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#1B2E4B] transition-colors"
                   />
                   <button
                     type="submit"
                     className="px-4 py-2.5 bg-[#1B2E4B] text-white text-sm rounded-lg hover:bg-[#243d63] transition-colors whitespace-nowrap"
                   >
-                    Notify me
+                    {t.notify}
                   </button>
                 </form>
               ) : (
                 <p className="text-sm text-emerald-600 font-medium">
-                  You&apos;re on the list — we&apos;ll email you when iOS
-                  launches.
+                  {t.notify_done}
                 </p>
               )}
             </div>
