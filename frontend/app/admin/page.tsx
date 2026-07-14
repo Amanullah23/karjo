@@ -141,6 +141,26 @@ export default function AdminPage() {
   useEffect(() => {
     if (profile?.role === "admin") fetchPending();
   }, [profile, fetchPending]);
+  function notifyEmployer(job: Job, action: "approved" | "rejected") {
+    const poster = job.posted_by ? posters[job.posted_by] : null;
+    if (!poster?.email) return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      fetch("/api/notify-employer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          to: poster.email,
+          name: poster.full_name,
+          jobTitle: job.title,
+          action,
+        }),
+      }).catch((e) => console.error("[Admin] notify error:", e));
+    });
+  }
 
   async function handleApprove(id: string) {
     setBusyId(id);
@@ -151,6 +171,8 @@ export default function AdminPage() {
     if (error) {
       console.error("[Admin] approve error:", error);
     } else {
+      const job = jobs.find((j) => j.id === id);
+      if (job) notifyEmployer(job, "approved");
       setJobs((prev) => prev.filter((j) => j.id !== id));
     }
     setBusyId(null);
@@ -163,6 +185,8 @@ export default function AdminPage() {
     if (error) {
       console.error("[Admin] reject error:", error);
     } else {
+      const job = jobs.find((j) => j.id === id);
+      if (job) notifyEmployer(job, "rejected");
       setJobs((prev) => prev.filter((j) => j.id !== id));
     }
     setBusyId(null);

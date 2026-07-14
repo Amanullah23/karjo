@@ -11,6 +11,7 @@ import {
   MapPin,
   Calendar,
   Trash2,
+  Pencil,
   ExternalLink,
   Building2,
 } from "lucide-react";
@@ -38,6 +39,8 @@ const copy = {
     empty_desc:
       "Post your first job — it will be reviewed by our team and then shown to thousands of job seekers.",
     empty_cta: "Post your first job",
+    edit: "Edit",
+    status_expired: "Expired",
   },
   fa: {
     tag: "کارفرما",
@@ -57,6 +60,8 @@ const copy = {
     empty_desc:
       "اولین وظیفه خود را ثبت کنید — پس از بررسی تیم ما، به هزاران کارجو نمایش داده می‌شود.",
     empty_cta: "ثبت اولین وظیفه",
+    edit: "ویرایش",
+    status_expired: "منقضی شده",
   },
 };
 
@@ -202,17 +207,30 @@ export default function EmployerDashboard() {
                     <h3 className="font-display font-bold text-navy text-base">
                       {job.title}
                     </h3>
-                    <span
-                      className={`text-[11px] font-semibold border px-2 py-0.5 rounded-full ${
-                        job.status === "approved"
+                    {(() => {
+                      const isExpired =
+                        job.status === "approved" &&
+                        !!job.expire_date &&
+                        job.expire_date <
+                          new Date().toISOString().split("T")[0];
+                      const cls = isExpired
+                        ? "bg-gray-100 text-gray-500 border-gray-200"
+                        : job.status === "approved"
                           ? "bg-emerald/10 text-emerald border-emerald/30"
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}
-                    >
-                      {job.status === "approved"
-                        ? t.status_approved
-                        : t.status_pending}
-                    </span>
+                          : "bg-amber-50 text-amber-700 border-amber-200";
+                      const label = isExpired
+                        ? t.status_expired
+                        : job.status === "approved"
+                          ? t.status_approved
+                          : t.status_pending;
+                      return (
+                        <span
+                          className={`text-[11px] font-semibold border px-2 py-0.5 rounded-full ${cls}`}
+                        >
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-warm-muted">
                     {job.location && (
@@ -235,6 +253,13 @@ export default function EmployerDashboard() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href={`/dashboard/edit-job/${job.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-navy border border-warm-gray px-3 py-2 rounded-xl hover:border-navy transition-all"
+                  >
+                    <Pencil size={13} />
+                    {t.edit}
+                  </Link>
                   {job.status === "approved" && (
                     <Link
                       href={`/jobs/${job.id}`}
