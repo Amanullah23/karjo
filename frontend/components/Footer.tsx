@@ -39,6 +39,7 @@ const copy = {
     terms: "Terms",
     guide: "How KarJo works",
     post_job: "Post a job",
+    for_employers: "For employers",
   },
   fa: {
     brand_desc:
@@ -56,6 +57,7 @@ const copy = {
     terms: "شرایط استفاده",
     guide: "راهنمای کارجو",
     post_job: "ثبت وظیفه",
+    for_employers: "برای کارفرمایان",
   },
 };
 
@@ -70,6 +72,7 @@ export default function Footer() {
     { label: t.download_app, href: "/download" },
     { label: t.contact_us, href: "/contact" },
     { label: t.guide, href: "/guide" },
+    { label: t.for_employers, href: "/for-employers" },
   ];
 
   const legalLinks = [
