@@ -142,6 +142,8 @@ def save_jobs(jobs: list[dict]) -> int:
                     "date":    job["date"],
                     "url":     job["url"],
                     "source":  job["source"],
+                    "source":  job["source"],
+                    "expire_date": job.get("expire_date"),
                 },
             )
             new_count += 1
@@ -198,3 +200,40 @@ def search_jobs(keyword: str, limit: int = 20) -> list[dict]:
     except Exception as e:
         logger.error(f"[DB] search_jobs error: {e}")
         return []
+    
+def cleanup_expired_jobs() -> dict:
+    """Delete stale SCRAPED jobs to free storage. Employer jobs (posted_by set) are never touched.
+    Rule A: expire_date passed more than 3 days ago.
+    Rule B: no expire_date and older than 60 days."""
+    from datetime import datetime, timedelta
+    result = {"expired": 0, "stale": 0}
+    try:
+        cutoff_expired = (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
+        res_a = requests.delete(
+            f"{BASE}/jobs",
+            headers={**HEADERS, "Prefer": "return=representation"},
+            params={
+                "posted_by":   "is.null",
+                "expire_date": f"lt.{cutoff_expired}",
+                "select":      "id",
+            },
+        )
+        result["expired"] = len(_safe_list(res_a, "cleanup expired"))
+
+        cutoff_stale = (datetime.utcnow() - timedelta(days=60)).isoformat()
+        res_b = requests.delete(
+            f"{BASE}/jobs",
+            headers={**HEADERS, "Prefer": "return=representation"},
+            params={
+                "posted_by":   "is.null",
+                "expire_date": "is.null",
+                "created_at":  f"lt.{cutoff_stale}",
+                "select":      "id",
+            },
+        )
+        result["stale"] = len(_safe_list(res_b, "cleanup stale"))
+
+        logger.info(f"[DB] Cleanup: deleted {result['expired']} expired + {result['stale']} stale scraped jobs")
+    except Exception as e:
+        logger.error(f"[DB] cleanup_expired_jobs error: {e}")
+    return result

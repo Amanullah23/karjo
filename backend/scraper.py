@@ -29,6 +29,9 @@ def scrape_jobs_af():
             publish_date = item.get("publishDate", "")
             date = publish_date.split(" ")[0] if publish_date else datetime.now().strftime("%Y-%m-%d")
 
+            expire_raw = item.get("expiryDate") or item.get("expireDate") or ""
+            expire_date = expire_raw.split(" ")[0] if expire_raw else None
+
             slug = item.get("slug", "")
             job_url = f"https://jobs.af/public/job/{slug}" if slug else url
 
@@ -40,6 +43,7 @@ def scrape_jobs_af():
                     "date":    date,
                     "url":     job_url,
                     "source":  "jobs.af",
+                    "expire_date": expire_date,
                 })
     except Exception as e:
         print(f"[jobs.af] Error: {e}")
