@@ -25,6 +25,7 @@ interface Prefs {
   alerts_enabled: boolean | null;
   alert_keywords: string | null;
   alert_provinces: string | null;
+  language: string | null;
 }
 
 /** Split a comma-separated preference string into lowercase terms. */
@@ -50,6 +51,38 @@ function matches(job: Job, keywords: string[], provinces: string[]): boolean {
     if (!provinces.some((p) => loc.includes(p))) return false;
   }
   return true;
+}
+
+/** In-app notification text, generated in the user's own language. */
+function buildNotificationText(
+  lang: string | null,
+  count: number,
+  personalized: boolean,
+): { title: string; body: string } {
+  const isDari = lang === "fa";
+  const jobWordEn = count === 1 ? "job" : "jobs";
+
+  if (personalized) {
+    return isDari
+      ? {
+          title: `متناسب با اطلاعیه شما: ${count} وظیفه جدید`,
+          body: `${count} وظیفه جدید متناسب با تنظیمات اطلاعیه شما.`,
+        }
+      : {
+          title: `Matches your alert: ${count} new ${jobWordEn}`,
+          body: `${count} new ${count === 1 ? "job matches" : "jobs match"} your alert preferences.`,
+        };
+  }
+
+  return isDari
+    ? {
+        title: `${count} وظیفه جدید امروز`,
+        body: `فرصت‌های تازه از jobs.af، ACBAR و LinkedIn.`,
+      }
+    : {
+        title: `${count} new ${jobWordEn} today`,
+        body: `Fresh opportunities from jobs.af, ACBAR and LinkedIn.`,
+      };
 }
 
 export async function GET(req: NextRequest) {
@@ -105,7 +138,7 @@ export async function GET(req: NextRequest) {
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, alerts_enabled, alert_keywords, alert_provinces")
+        .select("id, alerts_enabled, alert_keywords, alert_provinces, language")
         .in("id", userIds);
 
       for (const p of profiles ?? []) {
@@ -113,6 +146,7 @@ export async function GET(req: NextRequest) {
           alerts_enabled: p.alerts_enabled,
           alert_keywords: p.alert_keywords,
           alert_provinces: p.alert_provinces,
+          language: p.language,
         });
       }
     }
@@ -167,17 +201,18 @@ export async function GET(req: NextRequest) {
         groups.set(key, { tokens: [token], count });
       }
 
-      // ── NEW: record this user's in-app notification content ──
+      // ── record this user's in-app notification content, in their own language ──
       // (skip anonymous/guest tokens with no user_id — nothing to attach the row to)
       if (row.user_id && !userMessages.has(row.user_id)) {
+        const { title, body } = buildNotificationText(
+          prefs?.language ?? null,
+          count,
+          personalized,
+        );
         userMessages.set(row.user_id, {
           type: personalized ? "job_alert" : "job_match",
-          title: personalized
-            ? `Matches your alert: ${count} new ${count === 1 ? "job" : "jobs"}`
-            : `${count} new ${count === 1 ? "job" : "jobs"} today`,
-          body: personalized
-            ? `${count} new ${count === 1 ? "job matches" : "jobs match"} your alert preferences.`
-            : `Fresh opportunities from jobs.af, ACBAR and LinkedIn.`,
+          title,
+          body,
         });
       }
     }
