@@ -119,7 +119,13 @@ export async function GET(req: NextRequest) {
 
     // 4. Group tokens by the message they should receive.
     //    Users with the same match count get the same text → one multicast each.
+    //    ── NEW: also remember each individual user's own title/body so we
+    //    can write one notifications row per user below (Step 6). ──
     const groups = new Map<string, { tokens: string[]; count: number }>();
+    const userMessages = new Map<
+      string,
+      { type: string; title: string; body: string }
+    >();
     let skipped = 0;
 
     for (const row of tokens) {
@@ -159,6 +165,20 @@ export async function GET(req: NextRequest) {
         group.tokens.push(token);
       } else {
         groups.set(key, { tokens: [token], count });
+      }
+
+      // ── NEW: record this user's in-app notification content ──
+      // (skip anonymous/guest tokens with no user_id — nothing to attach the row to)
+      if (row.user_id && !userMessages.has(row.user_id)) {
+        userMessages.set(row.user_id, {
+          type: personalized ? "job_alert" : "job_match",
+          title: personalized
+            ? `Matches your alert: ${count} new ${count === 1 ? "job" : "jobs"}`
+            : `${count} new ${count === 1 ? "job" : "jobs"} today`,
+          body: personalized
+            ? `${count} new ${count === 1 ? "job matches" : "jobs match"} your alert preferences.`
+            : `Fresh opportunities from jobs.af, ACBAR and LinkedIn.`,
+        });
       }
     }
 
@@ -220,6 +240,28 @@ export async function GET(req: NextRequest) {
       await supabase.from("fcm_tokens").delete().in("token", invalidTokens);
     }
 
+    // ── NEW: write one notifications row per user so the Flutter app's
+    // Notifications page shows the same digest that was just pushed. ──
+    if (userMessages.size > 0) {
+      const rows = Array.from(userMessages.entries()).map(([user_id, msg]) => ({
+        user_id,
+        type: msg.type,
+        title: msg.title,
+        body: msg.body,
+      }));
+
+      // Insert in chunks of 500 (same batching pattern as the push above)
+      for (let i = 0; i < rows.length; i += 500) {
+        const chunk = rows.slice(i, i + 500);
+        const { error: notifError } = await supabase
+          .from("notifications")
+          .insert(chunk);
+        if (notifError) {
+          console.error("[notify] notifications insert error:", notifError);
+        }
+      }
+    }
+
     await supabase.from("job_notifications").insert({
       job_count: jobCount,
       sent_at: new Date().toISOString(),
@@ -233,6 +275,7 @@ export async function GET(req: NextRequest) {
       skippedOptOut: skipped,
       sent: totalSent,
       failed: totalFailed,
+      notificationsWritten: userMessages.size,
     });
   } catch (error) {
     console.error("Notification error:", error);
