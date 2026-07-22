@@ -1,103 +1,322 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import nodemailer from "nodemailer";
+import { initializeApp, getApps, cert, App } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
 
-export async function POST(req: NextRequest) {
-  // 1. Verify caller is a logged-in admin
-  const token = (req.headers.get("authorization") || "").replace("Bearer ", "");
-  if (!token) {
+function getFirebaseApp(): App {
+  if (getApps().length) return getApps()[0];
+  return initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  });
+}
+
+interface Job {
+  title: string | null;
+  company: string | null;
+  skills: string | null;
+  location: string | null;
+}
+
+interface Prefs {
+  alerts_enabled: boolean | null;
+  alert_keywords: string | null;
+  alert_provinces: string | null;
+  language: string | null;
+}
+
+/** Split a comma-separated preference string into lowercase terms. */
+function terms(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** Does this job match the user's keywords + provinces? Empty prefs = match all. */
+function matches(job: Job, keywords: string[], provinces: string[]): boolean {
+  if (keywords.length > 0) {
+    const haystack = [job.title, job.company, job.skills]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (!keywords.some((k) => haystack.includes(k))) return false;
+  }
+  if (provinces.length > 0) {
+    const loc = (job.location ?? "").toLowerCase();
+    if (!provinces.some((p) => loc.includes(p))) return false;
+  }
+  return true;
+}
+
+/** In-app notification text, generated in the user's own language. */
+function buildNotificationText(
+  lang: string | null,
+  count: number,
+  personalized: boolean,
+): { title: string; body: string } {
+  const isDari = lang === "fa";
+  const jobWordEn = count === 1 ? "job" : "jobs";
+
+  if (personalized) {
+    return isDari
+      ? {
+          title: `متناسب با اطلاعیه شما: ${count} وظیفه جدید`,
+          body: `${count} وظیفه جدید متناسب با تنظیمات اطلاعیه شما.`,
+        }
+      : {
+          title: `Matches your alert: ${count} new ${jobWordEn}`,
+          body: `${count} new ${count === 1 ? "job matches" : "jobs match"} your alert preferences.`,
+        };
+  }
+
+  return isDari
+    ? {
+        title: `${count} وظیفه جدید امروز`,
+        body: `فرصت‌های تازه از jobs.af، ACBAR و LinkedIn.`,
+      }
+    : {
+        title: `${count} new ${jobWordEn} today`,
+        body: `Fresh opportunities from jobs.af, ACBAR and LinkedIn.`,
+      };
+}
+
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  if (
+    !process.env.CRON_SECRET ||
+    authHeader !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
-
-  const {
-    data: { user },
-    error: userError,
-  } = await admin.auth.getUser(token);
-  if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  // 2. Validate payload
-  const { to, name, jobTitle, action } = await req.json();
-  if (!to || !jobTitle || !["approved", "rejected"].includes(action)) {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-  }
-
-  // 3. Build the bilingual email
-  const approved = action === "approved";
-  const subject = approved
-    ? `✅ Your job "${jobTitle}" is now live on KarJo`
-    : `Your job "${jobTitle}" was not approved`;
-
-  const greetName = name || "there";
-  const jobsUrl = "https://karjo.vercel.app/jobs";
-  const dashUrl = "https://karjo.vercel.app/dashboard";
-
-  const enBlock = approved
-    ? `<p>Hi ${greetName},</p>
-       <p>Good news — your job posting <strong>"${jobTitle}"</strong> has been reviewed and approved. It is now live and visible to job seekers on KarJo.</p>
-       <p><a href="${jobsUrl}" style="color:#059669;font-weight:bold;">View it on KarJo →</a></p>`
-    : `<p>Hi ${greetName},</p>
-       <p>Unfortunately your job posting <strong>"${jobTitle}"</strong> was not approved and has been removed. This usually happens when a listing is incomplete, unclear, or doesn't meet our quality guidelines.</p>
-       <p>You're welcome to post it again with more details from your <a href="${dashUrl}" style="color:#059669;font-weight:bold;">dashboard</a>.</p>`;
-
-  const faBlock = approved
-    ? `<p>سلام ${greetName}،</p>
-       <p>خبر خوب — آگهی شغلی شما <strong>«${jobTitle}»</strong> بررسی و تأیید شد. اکنون در کارجو فعال و برای کارجویان قابل مشاهده است.</p>`
-    : `<p>سلام ${greetName}،</p>
-       <p>متأسفانه آگهی شغلی شما <strong>«${jobTitle}»</strong> تأیید نشد و حذف گردید. این معمولاً زمانی اتفاق می‌افتد که آگهی ناقص، نامشخص یا خلاف معیارهای کیفی ما باشد.</p>
-       <p>می‌توانید آن را با جزئیات بیشتر دوباره از داشبورد خود ثبت کنید.</p>`;
-
-  const html = `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-    <div style="margin-bottom:24px;">
-      <span style="font-size:22px;font-weight:bold;color:#1B2E4B;">Kar</span><span style="font-size:22px;font-weight:bold;color:#059669;">Jo</span>
-      <span style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:999px;padding:2px 8px;margin-left:8px;">کارجو</span>
-    </div>
-    <div style="color:#333;font-size:14px;line-height:1.7;">
-      ${enBlock}
-      <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
-      <div dir="rtl" style="text-align:right;">
-        ${faBlock}
-      </div>
-    </div>
-    <p style="color:#999;font-size:11px;margin-top:28px;">KarJo · کارجو — Every Afghan Job, One Place.<br/>karjo.vercel.app</p>
-  </div>`;
-
-  // 4. Send via Gmail
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
+    const app = getFirebaseApp();
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!,
+    );
+
+    // 1. Today's new jobs — fetched once, filtered per user in memory
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data: jobs, error: jobsError } = await supabase
+      .from("jobs")
+      .select("title, company, skills, location")
+      .gte("created_at", today.toISOString());
+
+    if (jobsError) {
+      console.error("[notify] jobs fetch error:", jobsError);
+      return NextResponse.json({ error: "Job fetch failed" }, { status: 500 });
+    }
+
+    const jobCount = jobs?.length ?? 0;
+    if (jobCount === 0) {
+      return NextResponse.json({ message: "No new jobs today", sent: 0 });
+    }
+
+    // 2. Tokens with their owner
+    const { data: tokens, error: tokenError } = await supabase
+      .from("fcm_tokens")
+      .select("token, user_id");
+
+    if (tokenError || !tokens || tokens.length === 0) {
+      return NextResponse.json({ message: "No FCM tokens found", sent: 0 });
+    }
+
+    // 3. Preferences for those users, in one query
+    const userIds = Array.from(
+      new Set(tokens.map((t) => t.user_id).filter(Boolean)),
+    ) as string[];
+
+    const prefsById = new Map<string, Prefs>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, alerts_enabled, alert_keywords, alert_provinces, language")
+        .in("id", userIds);
+
+      for (const p of profiles ?? []) {
+        prefsById.set(p.id, {
+          alerts_enabled: p.alerts_enabled,
+          alert_keywords: p.alert_keywords,
+          alert_provinces: p.alert_provinces,
+          language: p.language,
+        });
+      }
+    }
+
+    // 4. Group tokens by the message they should receive.
+    //    Users with the same match count get the same text → one multicast each.
+    //    ── NEW: also remember each individual user's own title/body so we
+    //    can write one notifications row per user below (Step 6). ──
+    const groups = new Map<string, { tokens: string[]; count: number }>();
+    const userMessages = new Map<
+      string,
+      { type: string; title: string; body: string }
+    >();
+    let skipped = 0;
+
+    for (const row of tokens) {
+      const token = row.token as string;
+      if (!token) continue;
+
+      const prefs = row.user_id ? prefsById.get(row.user_id) : undefined;
+
+      // Opted out — skip entirely
+      if (prefs?.alerts_enabled === false) {
+        skipped++;
+        continue;
+      }
+
+      const kw = terms(prefs?.alert_keywords ?? null);
+      const pv = terms(prefs?.alert_provinces ?? null);
+
+      // No prefs (or anonymous token) → general digest
+      let count = jobCount;
+      let personalized = false;
+
+      if (kw.length > 0 || pv.length > 0) {
+        const matched = (jobs as Job[]).filter((j) =>
+          matches(j, kw, pv),
+        ).length;
+        // Fall back to the general digest when nothing matches,
+        // so narrow preferences never mean silence.
+        if (matched > 0) {
+          count = matched;
+          personalized = true;
+        }
+      }
+
+      const key = `${personalized ? "p" : "g"}:${count}`;
+      const group = groups.get(key);
+      if (group) {
+        group.tokens.push(token);
+      } else {
+        groups.set(key, { tokens: [token], count });
+      }
+
+      // ── record this user's in-app notification content, in their own language ──
+      // (skip anonymous/guest tokens with no user_id — nothing to attach the row to)
+      if (row.user_id && !userMessages.has(row.user_id)) {
+        const { title, body } = buildNotificationText(
+          prefs?.language ?? null,
+          count,
+          personalized,
+        );
+        userMessages.set(row.user_id, {
+          type: personalized ? "job_alert" : "job_match",
+          title,
+          body,
+        });
+      }
+    }
+
+    // 5. Send one multicast per group, batched at 500
+    const messaging = getMessaging(app);
+    let totalSent = 0;
+    let totalFailed = 0;
+    const invalidTokens: string[] = [];
+
+    for (const [key, group] of groups) {
+      const personalized = key.startsWith("p:");
+      const title = personalized
+        ? `🔔 ${group.count} New ${group.count === 1 ? "Job" : "Jobs"} For You`
+        : `🔔 ${group.count} New ${group.count === 1 ? "Job" : "Jobs"} Today`;
+      const body = personalized
+        ? `${group.count} new ${group.count === 1 ? "job matches" : "jobs match"} your alert preferences. Tap to explore!`
+        : `${group.count} new job opportunities in Afghanistan. Tap to explore!`;
+
+      for (let i = 0; i < group.tokens.length; i += 500) {
+        const batch = group.tokens.slice(i, i + 500);
+
+        const response = await messaging.sendEachForMulticast({
+          tokens: batch,
+          notification: { title, body },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "karjo_daily",
+              color: "#059669",
+              clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
+          },
+          data: {
+            type: "daily_jobs",
+            job_count: group.count.toString(),
+            personalized: personalized ? "true" : "false",
+            screen: "notifications",
+          },
+        });
+
+        totalSent += response.successCount;
+        totalFailed += response.failureCount;
+
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            const code = resp.error?.code;
+            if (
+              code === "messaging/invalid-registration-token" ||
+              code === "messaging/registration-token-not-registered"
+            ) {
+              invalidTokens.push(batch[idx]);
+            }
+          }
+        });
+      }
+    }
+
+    if (invalidTokens.length > 0) {
+      await supabase.from("fcm_tokens").delete().in("token", invalidTokens);
+    }
+
+    // ── NEW: write one notifications row per user so the Flutter app's
+    // Notifications page shows the same digest that was just pushed. ──
+    if (userMessages.size > 0) {
+      const rows = Array.from(userMessages.entries()).map(([user_id, msg]) => ({
+        user_id,
+        type: msg.type,
+        title: msg.title,
+        body: msg.body,
+      }));
+
+      // Insert in chunks of 500 (same batching pattern as the push above)
+      for (let i = 0; i < rows.length; i += 500) {
+        const chunk = rows.slice(i, i + 500);
+        const { error: notifError } = await supabase
+          .from("notifications")
+          .insert(chunk);
+        if (notifError) {
+          console.error("[notify] notifications insert error:", notifError);
+        }
+      }
+    }
+
+    await supabase.from("job_notifications").insert({
+      job_count: jobCount,
+      sent_at: new Date().toISOString(),
     });
 
-    await transporter.sendMail({
-      from: `"KarJo کارجو" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html,
+    return NextResponse.json({
+      success: true,
+      jobCount,
+      totalTokens: tokens.length,
+      groups: groups.size,
+      skippedOptOut: skipped,
+      sent: totalSent,
+      failed: totalFailed,
+      notificationsWritten: userMessages.size,
     });
-
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[notify-employer] send error:", error);
-    return NextResponse.json({ error: "Failed to send" }, { status: 500 });
+    console.error("Notification error:", error);
+    return NextResponse.json(
+      { error: "Failed to send notifications", details: String(error) },
+      { status: 500 },
+    );
   }
 }
