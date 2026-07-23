@@ -96,7 +96,7 @@ export default function DownloadPage() {
   const APK_VERSIONS = [
     {
       label: t.latest_version,
-      size: "24.9 MB",
+      size: "38.9 MB",
       file: "/downloads/karjo-latest.apk",
     },
   ];
